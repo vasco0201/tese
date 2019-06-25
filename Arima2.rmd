@@ -1,0 +1,75 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library('ggplot2')
+library('forecast')
+library('tseries')
+library('chron')
+```
+
+
+
+```{r}
+data = read.csv('\\Users\\ASUS\\Documents\\IST\\5ºAno\\arima_data.csv')
+
+colnames(data) = c("Date","Count")
+data$Date = as.character(data$Date)
+
+dtimes = data$Date
+head(data)
+#data$Date2 = as.Date(data$Date) 
+#head(data)
+dtparts = t(as.data.frame(strsplit(dtimes," ")))
+row.names(dtparts) = NULL
+thetimes = chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
+myts <- ts(data$Count, start=1, end=480, frequency=96)
+
+```
+
+
+```{r}
+model = auto.arima(myts, seasonal = T)
+pred = predict(model,n.ahead = 96)
+
+```
+
+
+```{r}
+
+obs_data = read.csv('\\Users\\ASUS\\Documents\\IST\\5ºAno\\test_data.csv')
+obs = obs_data$Count
+
+pred_values = pred$pred
+pred_values = as.numeric(pred_values)
+pred_values
+x = c(1:96)
+plot(x,pred_values)
+lines(x, pred_values, col='red')
+lines(x,obs, col = 'blue')
+legend("topright", legend = c("pred", "obs"), col = c('red','blue'), pch = "-", pt.cex = 5)
+
+
+mae <- function(error)
+{
+    mean(abs(error))
+}
+ 
+rmse <- function(error)
+{
+    sqrt(mean(error^2))
+}
+ 
+error <- pred_values-obs
+
+maemaError = mae(error)
+rmsError = rmse(error)
+
+```
+

@@ -1,0 +1,3 @@
+Next steps:
+-> testar com datasets de outros papers
+-> Correr isto para todas as espiras e ver se os resultados sao semelhantes

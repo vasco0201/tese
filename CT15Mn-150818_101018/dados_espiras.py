@@ -59,7 +59,7 @@ def main():
             except ValueError:
                 broken_log.write("-------------------Ficheiro:" + filename + "-----------------"+ "\n")
                 continue
-            print(data[0])
+            
             if not re.search("[0-9]*\-[0-9]*\-[0-9]*",data[0]): #if entry doesn't start with the date then it is broken
                 broken_log.write("-------------------Ficheiro:" + filename + "-----------------"+ "\n")
                 continue

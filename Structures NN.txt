@@ -1,0 +1,74 @@
+Structures NN
+Espira de treino 2_ct1
+8 8 
+['loss', 'mean_absolute_percentage_error', 'acc']
+[17475.847209507927, 4552771.331538249, 0.0006420545746388443]
+4 4
+['loss', 'mean_absolute_percentage_error', 'acc']
+[18513.102351901085, 14803894.568070723, 0.0016051364365971107]
+16 16
+['loss', 'mean_absolute_percentage_error', 'acc']
+[17387.613837404697, 7449719.007286246, 0.0022471910112359553]
+32 32
+['loss', 'mean_absolute_percentage_error', 'acc']
+[17365.106215201144, 4382183.574619323, 0.0009630818619582664]
+
+8
+['loss', 'mean_absolute_percentage_error', 'acc']
+[18497.54599781802, 12326483.561054, 0.0009630818619582664]
+16
+['loss', 'mean_absolute_percentage_error', 'acc']
+[18127.7586034686, 11686664.31559877, 0.00032102728731942215]
+32
+['loss', 'mean_absolute_percentage_error', 'acc']
+[17948.02491315961, 12011845.102882309, 0.0012841091492776886]
+
+Tarefas:
+V - Criar uma rede com dados repetidos periodicamente
+Algumas melhorias mas ainda não suficiente
+
+V - Gráfico Real vs Previsto (~3 dias)
+
+V - print dos pesos e análise (por alto)
+V - Gráfico 400 400 : dia repetido
+
+V - Experimentar por uma janela temporal maior (mais historico recente)
+
+V - Testar com os dados antigos para ver mais dados fazem a rede convergir : não
+Batch size = nºpadrões
+optimizer grad desc lr = 0.1 momentum = 0.9
+Gerar dados periodicos
+
+Problema : 
+As ultimas horas do dia e as primeiras não estão a ser contempladas na sliding window
+
+V - Preditor linear -> Testar com poucas unidades; ver graficos
+V - gerar dados periodicos
+V - Parsing json -> ver se os erros são recorrentes : não são, solved
+Nova abordagem no smoothing:
+-> consegui retirar muitos dos picos mas como apenas apliquei smoothing aos dados de treino não houve melhoria nos resultados
+Próximo passo: Experimentar aplicar o mesmo método ao test set : same
+				 
+->ver quantas vezes é que há variações no current/optimal travel time no data set do tomtom por dia
+
+
+-> Fazer predição para varias espiras ao mesmo tempo
+-> Utilizar espiras confluentes para ajudar na predição
+-> Aplicar não só as ultimas horas mas também outros ciclos (dia do mês, altura do ano, etc..)
+-> Estudar artigos sobre smoothing e guarda-los 
+-> Acabar a previsão com arima
+
+
+Outras espiras
+3_ct10 X
+4_ct3  X
+14_ct14 X
+14_ct13 X
+14_ct12 X
+2_ct1 X
+
+
+Testar outras abordagens:
+ARIMA
+k-NN
+

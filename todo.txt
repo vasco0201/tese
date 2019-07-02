@@ -1,5 +1,6 @@
 Next steps:
 -> testar com espiras confluentes para ver se melhora os restultados
+-> incorporar o dataset completo (os 3 que temos atualmente)
 -> Descobrir os melhores parametros para a rede automaticamente
 -> Correr isto para todas as espiras e ver se os resultados sao semelhantes
 -> testar com datasets de outros papers

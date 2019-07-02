@@ -112,7 +112,7 @@ def plot_results(pred, obsY, plot_name, flag):
 ######################### READING THE DATA ####################
 
 def get_data(ID_Espira, flag_test =0, test_date = np.datetime64('2018-08-27')):
-	data_folder = os.path.join(curr_dir, "CT15Mn-150818_101018", "dados_camara.csv")
+	data_folder = os.path.join(curr_dir, "CT15Mn-150818_101018", "dados_camara.csv") #newdata
 	dataset = pd.read_csv(data_folder)#dados mais recentes
 	#tomtom = pd.read_csv("\\Users\\ASUS\\Documents\\IST\\5ºAno\\tomtom_data.csv")
 	#dataset = pd.read_csv("\\Users\\ASUS\\Documents\\IST\\5ºAno\\periodic_data.csv") #dados periodicos gerados automaticamente
@@ -454,7 +454,7 @@ def main():
 	t = ta.Scan(x=trainX,
             y=trainY,
             model=create_model,
-            grid_downsample=0.01, 
+            grid_downsample=0.001, 
             params=p,
             dataset_name='traffic_flow',
             experiment_no='1')

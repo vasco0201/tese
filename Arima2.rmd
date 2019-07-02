@@ -17,7 +17,7 @@ library('chron')
 
 
 ```{r}
-data = read.csv('\\Users\\ASUS\\Documents\\IST\\5ºAno\\arima_data.csv')
+data = read.csv('/home/vasco/tese/arima_data.csv')
 
 colnames(data) = c("Date","Count")
 data$Date = as.character(data$Date)
@@ -37,13 +37,14 @@ myts <- ts(data$Count, start=1, end=480, frequency=96)
 ```{r}
 model = auto.arima(myts, seasonal = T)
 pred = predict(model,n.ahead = 96)
+save(model, file = "arima_model.rda")
 
 ```
 
 
 ```{r}
 
-obs_data = read.csv('\\Users\\ASUS\\Documents\\IST\\5ºAno\\test_data.csv')
+obs_data = read.csv('/home/vasco/tese/test_data.csv')
 obs = obs_data$Count
 
 pred_values = pred$pred

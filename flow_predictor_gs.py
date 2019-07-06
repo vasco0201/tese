@@ -452,14 +452,15 @@ def main():
      'losses': ['mean_squared_error']#, 'binary_crossentropy']
     }
 	trainX, trainY, testX, testY= nn_model(p) #Eventualmente dar a opcao de escolher os hiperparametros
+	for m in range(20):
+		t = ta.Scan(x=trainX,
+	            y=trainY,
+	            model=create_model,
+	            grid_downsample=0.05, 
+	            params=p,
+	            dataset_name='traffic_flow2',
+	            experiment_no=str(m))
 
-	t = ta.Scan(x=trainX,
-            y=trainY,
-            model=create_model,
-            grid_downsample=0.20, 
-            params=p,
-            dataset_name='traffic_flow',
-            experiment_no='3')
 
 
 	#evaluate model

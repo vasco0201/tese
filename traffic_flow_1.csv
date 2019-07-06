@@ -1,0 +1,10 @@
+round_epochs,loss,mean_absolute_error,lr,first_neuron,hidden_layers,batch_size,epochs,dropout,optimizer,shapes,activation,losses
+300,150.2618086665869,8.990164474340586,0.01,32,1,2,300,0.5,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error
+400,803.5700439453125,21.552474682147686,0.01,8,1,96,400,0.5,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error
+400,46.1310417835529,5.26952353807596,0.01,64,0,10,400,0,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error
+300,7313.324481670673,64.78334375528189,0.001,8,0,10,300,0.5,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error
+300,5997.393817608173,65.48547774094801,0.01,8,1,96,300,0.5,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error
+400,2736.9679213303784,47.16032571059007,0.001,8,2,10,400,0,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error
+100,3699.3047588641825,52.46109407865084,0.01,32,2,96,100,0.5,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error
+400,4368.601847956731,59.638491821289065,0.001,16,3,96,400,0,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error
+400,605.0026545597957,20.267266317514274,0.01,64,4,96,400,0.5,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error

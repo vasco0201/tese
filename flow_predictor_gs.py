@@ -3,6 +3,8 @@ import numpy as np
 import copy
 import sys
 import os
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from scipy import stats
@@ -438,38 +440,38 @@ def main():
 	
 	print("Antes do nn model")
 
-	p = {'lr': [0.001,0.5,10],
-     'first_neuron':[4, 8, 16, 32, 64],
-     'hidden_layers':[0, 1, 2, 3, 4],
-     'batch_size': [2,10,96],
-     'epochs': [100,200,300,400],
-     'dropout': [0, 0.5],
+	p = {'lr': [0.001,0.01],
+     'first_neuron':[32, 64,128],
+     'hidden_layers':[1, 2, 3, 4],
+     'batch_size': [10,96],
+     'epochs': [200,300,400,500],
+     'dropout': [0, 0.05],
      'optimizer': [optimizers.RMSprop],
-     'shapes':['brick','long_funnel'],
+     'shapes':['brick'], #,'long_funnel'],
      'activation':['relu'],
-     'losses': ['mean_squared_error', 'binary_crossentropy']
+     'losses': ['mean_squared_error']#, 'binary_crossentropy']
     }
 	trainX, trainY, testX, testY= nn_model(p) #Eventualmente dar a opcao de escolher os hiperparametros
 
 	t = ta.Scan(x=trainX,
             y=trainY,
             model=create_model,
-            grid_downsample=0.001, 
+            grid_downsample=0.20, 
             params=p,
             dataset_name='traffic_flow',
-            experiment_no='1')
+            experiment_no='3')
 
 
 	#evaluate model
-	model_results(trainX, trainY, testX, testY,model)
+	#model_results(trainX, trainY, testX, testY,model)
 
 	#plot the results for the first three days
 	#obs_df = pd.read_csv('3day_unsmoothed.csv')
 	#FIXME HAVE TO CREATE SLIDING WINDOW FOR THIS NEW DATASET
-	evaluate_instance('test_set2.csv',model)
+	#evaluate_instance('test_set2.csv',model)
 
 
 	
 	#plot_results (predicted, observed, output file name, flag to choose how many days to plot)
-	plot_results(pred, obsY, "cenas",3) #change filename dynamically
+	#plot_results(pred, obsY, "cenas",3) #change filename dynamically
 main()

@@ -1,5 +1,7 @@
 Next steps:
 -> testar com espiras confluentes para ver se melhora os restultados
+   -> Se calhar não devia separar o dataset aleatoreamente né (:
+   -> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
 -> incorporar o dataset completo (os 3 que temos atualmente)
 -> Descobrir os melhores parametros para a rede automaticamente
 -> Correr isto para todas as espiras e ver se os resultados sao semelhantes

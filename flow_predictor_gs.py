@@ -18,6 +18,8 @@ import talos as ta
 from talos import Evaluate
 from talos import Deploy
 from talos.model.normalizers import lr_normalizer
+import time
+import gc
 
 
 
@@ -440,26 +442,31 @@ def main():
 	
 	print("Antes do nn model")
 
-	p = {'lr': [0.001,0.01],
-     'first_neuron':[32, 64,128],
-     'hidden_layers':[1, 2, 3, 4],
-     'batch_size': [10,96],
-     'epochs': [200,300,400,500],
-     'dropout': [0, 0.05],
+	p = {'lr': [0.001],#,0.01],
+     'first_neuron':[16],#,128],
+     'hidden_layers':[2],
+     'batch_size': [8,16],
+     'epochs': [500],
+     'dropout': [0.01],
      'optimizer': [optimizers.RMSprop],
      'shapes':['brick'], #,'long_funnel'],
      'activation':['relu'],
      'losses': ['mean_squared_error']#, 'binary_crossentropy']
     }
 	trainX, trainY, testX, testY= nn_model(p) #Eventualmente dar a opcao de escolher os hiperparametros
-	for m in range(20):
+	for m in range(3):
 		t = ta.Scan(x=trainX,
 	            y=trainY,
 	            model=create_model,
-	            grid_downsample=0.05, 
+	            #grid_downsample=0.05, 
 	            params=p,
-	            dataset_name='traffic_flow2',
-	            experiment_no=str(m))
+	            dataset_name='hyperparams_results/traffic_flow',
+	            experiment_no='3')#str(m))
+		print("Going to sleep")
+		time.sleep(10)
+		gc.collect()
+		print("Woke up!")
+
 
 
 

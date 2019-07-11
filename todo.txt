@@ -1,5 +1,5 @@
 Next steps:
--> testar com espiras confluentes para ver se melhora os restultados
+-> testar com espiras confluentes para ver se melhora os restultados (já está no notebook agora é preciso por em codigo)
    -> Se calhar não devia separar o dataset aleatoreamente né (:
    -> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
 -> incorporar o dataset completo (os 3 que temos atualmente)

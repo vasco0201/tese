@@ -1,2 +1,4 @@
 #ignore all csv files
 **/dados_camara.csv
+**/combined_csv.csv
+

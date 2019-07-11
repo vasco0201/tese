@@ -1,0 +1,3 @@
+round_epochs,loss,mean_absolute_error,lr,first_neuron,hidden_layers,batch_size,epochs,dropout,optimizer,shapes,activation,losses
+500,49.072559757999215,5.0314292186259095,0.01,16,2,16,500,0.01,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error
+500,82.35693292640343,6.5441239291612705,0.001,16,3,16,500,0.01,<class 'keras.optimizers.RMSprop'>,brick,relu,mean_squared_error

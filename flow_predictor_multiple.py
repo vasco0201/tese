@@ -101,14 +101,13 @@ def plot_results(pred, obsY, plot_name, flag):
 		ax.tick_params(axis='x', rotation=90)
 
 	fig.set_size_inches(40, 20)
-	fig.savefig(curr_dir + "\\results_nn\\" +str(plot_name)+".png", dpi=100)
+	fig.savefig(curr_dir + "\\plot_results_nn\\" +str(plot_name)+".png", dpi=100)
 #
 
 ######################### READING THE DATA ####################
-
-def get_data(ID_Espira, flag_test =0, test_date = np.datetime64('2018-08-27')):
-	#data_folder = os.path.join(curr_dir, "CT15Mn-150818_101018", "dados_camara.csv")
-	data_folder = os.path.join(curr_dir, "dados_camara_todos.csv")
+def get_data():
+	data_folder = os.path.join(curr_dir, "CT15Mn-150818_101018", "dados_camara.csv")
+	#data_folder = os.path.join(curr_dir, "dados_camara_todos.csv")
 
 	dataset = pd.read_csv(data_folder)#dados mais recentes
 	#tomtom = pd.read_csv("\\Users\\ASUS\\Documents\\IST\\5ºAno\\tomtom_data.csv")
@@ -116,8 +115,12 @@ def get_data(ID_Espira, flag_test =0, test_date = np.datetime64('2018-08-27')):
 	#dataset = pd.read_csv("\\Users\\ASUS\\Documents\\IST\\5ºAno\\dados_old.csv") #dados mais antigos
 	dataset['unique_id'] = dataset.Zona.astype(str) + '_' + dataset.ID_Espira.astype(str)
 	dataset['unique_id'] = dataset['unique_id'].str.lower()
-	dataset = dataset[dataset["unique_id"] == str(ID_Espira)]
+	return dataset
 
+###################### TRAIN TEST SPLIT #######################
+def split_data(dataset,ID_Espira, flag_test =0, test_date = np.datetime64('2018-08-27')):
+	
+	dataset = dataset[dataset["unique_id"] == str(ID_Espira)]
 	dataset = dataset.drop(columns=["Zona","Contadores","ID_Espira","unique_id"])
 	dt2 = copy.deepcopy(dataset)
 	#dataset.sort_values(['Data'],ascending=True).groupby('Data').reset_index()
@@ -130,6 +133,7 @@ def get_data(ID_Espira, flag_test =0, test_date = np.datetime64('2018-08-27')):
 	
 	if flag_test == 1:
 		#creating a new testing data set for comparison with Sarima Model or other models
+		#For a specific date (because the dates need to match)
 		test_set = dataset[(dataset['Data'] == str(test_date))]
 		test_set.to_csv("test_set.csv", sep= ',', index=False)
 
@@ -159,7 +163,7 @@ def get_data(ID_Espira, flag_test =0, test_date = np.datetime64('2018-08-27')):
 	#train_df.reset_index(drop=True)
 	return dt2, train_df, test_df, dataset
 
-
+######################## DATA TRANSFORMATION #########################
 def transform_data(in_file, out_file, nrows=-1):
     in_file = open(str(in_file),"r")
     next(in_file)
@@ -296,8 +300,8 @@ def nn_model(params):
 	dataset = dataframe.values
 	test_set = dataset.astype('float32')
 
-	print(len(train_set))
-	print(len(test_set))
+	#print(len(train_set))
+	#print(len(test_set))
 	trainX, trainY = create_dataset(train_set)
 	testX, testY = create_dataset(test_set)
 	model = Sequential()
@@ -317,7 +321,7 @@ def nn_model(params):
 	return trainX, trainY, testX, testY,model
 
 
-def model_results(trainX, trainY, testX, testY,model):
+def model_results(trainX, trainY, testX, testY,model,ID_Espira):
 	
 	# Estimate model performance
 	trainScore = model.evaluate(trainX, trainY, verbose=0)
@@ -332,6 +336,16 @@ def model_results(trainX, trainY, testX, testY,model):
 	# generate predictions for training
 	trainPredict = model.predict(trainX)
 	testPredict = model.predict(testX)
+
+	output = open("train_score.txt","a+")
+	#mae, rmse
+	output.write(str(ID_Espira) + "," + str(trainScore[2]) +"," + str(trainScore[3]))
+	output.close()
+
+	output = open("test_score.txt","a+")
+	#mae, rmse
+	output.write(str(ID_Espira) + "," + str(testScore[2]) +"," + str(testScore[3]))
+	output.close()
 	#print(trainPredict)
 	#print(trainY)
 	#print(testPredict)
@@ -360,15 +374,16 @@ def model_results(trainX, trainY, testX, testY,model):
 	    f.write("Test Set metrics :"  + str(testScore) +"\n\n\n")
 	    f.close()
 def evaluate_instance(filename, model):
+	output = open(str(filename) +".txt","w")
 	obs_df = pd.read_csv(filename)
 	obs = obs_df.values
 	obs = obs.astype('float32')
 	obsX, obsY = create_dataset(obs)
 	pred = model.predict(obsX)
-	print("----------------PRED-----------------------")
-	print(pred)
-	print("----------------OBSX-----------------------")
-	print(obsX)
+	#print("----------------PRED-----------------------")
+	#print(pred)
+	#print("----------------OBSX-----------------------")
+	#print(obsX)
 	score = model.evaluate(obsX, obsY, verbose=0)
 	print("MAE:" ,score[2] ,"RMSE: ", score[3])
 	#plot_results(pred, obsY, "teste",1)
@@ -380,58 +395,70 @@ def main():
 	#ID_Espira = input("Coloque id da espira: ")
 	ID_Espira = "4_ct4"
 	test_date = np.datetime64('2018-08-27')
-	dt2, train_set, test_set, dataset = get_data(ID_Espira, 1, test_date)
-	#dt2, train_set, test_set, dataset = get_data(ID_Espira)
-	train_cp = copy.deepcopy(train_set)
-	test_cp = copy.deepcopy(test_set)
-	
-	#smoothing both sets
-	smooth_train, df_train= smooth_data(train_cp, "train_2") 
-	smooth_test, df_test = smooth_data(test_cp, "test_2")
+	dataset = get_data()
+	unique_ids = dataset.unique_id.unique()
+	print(len(unique_ids))
+	iteracao = 0
+	for s in unique_ids:
+		iteracao+=1
+		print("Tou no: ", s)
+		print("Iteracao nr: ", iteracao)
+		dt2, train_set, test_set, dataset = split_data(dataset,s, 1, test_date)
+		#dt2, train_set, test_set, dataset = get_data(ID_Espira)
+		train_cp = copy.deepcopy(train_set)
+		test_cp = copy.deepcopy(test_set)
+		
+		#smoothing both sets
+		smooth_train, df_train= smooth_data(train_cp, "train_2") 
+		smooth_test, df_test = smooth_data(test_cp, "test_2")
 
-	#smoothing with z score
-	#NOT IN USE
-	#zscore_train = smooth_zscore(train_cp)
+		#smoothing with z score
+		#NOT IN USE
+		#zscore_train = smooth_zscore(train_cp)
 
-	#Original datasets before smoothing
+		#Original datasets before smoothing
 
-	dataframe = pd.read_csv('train.csv')
-	dataset = dataframe.drop(columns=["Data"])
-	dataset = dataset.values
-	train = dataset.astype('float32')
+		dataframe = pd.read_csv('train.csv')
+		dataset = dataframe.drop(columns=["Data"])
+		dataset = dataset.values
+		train = dataset.astype('float32')
 
-	dataframe = pd.read_csv('test.csv')
-	dataset = dataframe.drop(columns=["Data"])
-	dataset = dataset.values
-	test = dataset.astype('float32')
-	
-	# plot differences between original and smoothed data
-	plot_changes(train, df_train)
-	#plot_changes(test, df_test)
-	
-
-
-	#prepares the data for the nn 
-	transform_data("dados_nn.csv", "new_f.csv")
-	transform_data("dados_nn.csv", "3day_nn.csv", 3)
-	#transform_data("train2.csv", "smoothed_data.csv") not needed anymore
-	transform_data("test_2.csv", "test_formatted.csv")
-	transform_data("test_2.csv", "3day_unsmoothed.csv",3)
-	transform_data("train_2.csv", "train_formatted.csv")
-	transform_data("test_set.csv", "test_set2.csv")
-	# creates and trains the model
-	trainX, trainY, testX, testY, model = nn_model("cenas") #Eventualmente dar a opcao de escolher os hiperparametros
-
-	#evaluate model
-	model_results(trainX, trainY, testX, testY,model)
-
-	#plot the results for the first three days
-	#obs_df = pd.read_csv('3day_unsmoothed.csv')
-	#FIXME HAVE TO CREATE SLIDING WINDOW FOR THIS NEW DATASET
-	evaluate_instance('test_set2.csv',model)
+		dataframe = pd.read_csv('test.csv')
+		dataset = dataframe.drop(columns=["Data"])
+		dataset = dataset.values
+		test = dataset.astype('float32')
+		
+		# plot differences between original and smoothed data
+		plot_changes(train, df_train, s)
+		#plot_changes(test, df_test)
+		
 
 
-	
-	#plot_results (predicted, observed, output file name, flag to choose how many days to plot)
-	#plot_results(pred, obsY, "cenas",3) #change filename dynamically
+		#prepares the data for the nn 
+		transform_data("dados_nn.csv", "new_f.csv")
+		transform_data("dados_nn.csv", "3day_nn.csv", 3)
+		#transform_data("train2.csv", "smoothed_data.csv") not needed anymore
+		transform_data("test_2.csv", "test_formatted.csv")
+		transform_data("test_2.csv", "3day_unsmoothed.csv",3)
+		transform_data("train_2.csv", "train_formatted.csv")
+		transform_data("test_set.csv", "test_set2.csv")
+		# creates and trains the model
+		trainX, trainY, testX, testY, model = nn_model("cenas") #Eventualmente dar a opcao de escolher os hiperparametros
+
+		#evaluate model
+		model_results(trainX, trainY, testX, testY,model, s)
+
+		#plot the results for the first three days
+		#obs_df = pd.read_csv('3day_unsmoothed.csv')
+		#FIXME HAVE TO CREATE SLIDING WINDOW FOR THIS NEW DATASET
+		#evaluate_instance('test_set2.csv',model)
+
+
+		obs_df = pd.read_csv("3day_unsmoothed.csv")
+		obs = obs_df.values
+		obs = obs.astype('float32')
+		obsX, obsY = create_dataset(obs)
+		pred = model.predict(obsX)
+		#plot_results (predicted, observed, output file name, flag to choose how many days to plot)
+		plot_results(pred, obsY, s,3) #change filename dynamically
 main()

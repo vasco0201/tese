@@ -330,9 +330,6 @@ def create_model(trainX, trainY, testX, testY, params):
 	#model.compile(loss='mean_squared_error', optimizer=rmsprop,metrics=['mape', 'mae', 'mse'])
 	history = model.fit(trainX, trainY, epochs=params['epochs'],batch_size=params['batch_size']
 		,verbose=0)
-	nf = open("results_hyper.txt","a+")
-	nf.write(str(history)+ "\n")
-	nf.close()
 	return history, model
 
 def model_results(trainX, trainY, testX, testY,model):

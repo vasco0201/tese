@@ -1,8 +1,23 @@
 Next steps:
+
+
+-> Fazer um log para começar a registar resultados e tirar conclusoes
 -> testar com espiras confluentes para ver se melhora os restultados (já está no notebook agora é preciso por em codigo)
+-> Correr isto para todas as espiras e ver se os resultados sao semelhantes 
    -> Se calhar não devia separar o dataset aleatoreamente né (:
    -> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
 -> incorporar o dataset completo (os 3 que temos atualmente)
 -> Descobrir os melhores parametros para a rede automaticamente
--> Correr isto para todas as espiras e ver se os resultados sao semelhantes
 -> testar com datasets de outros papers
+
+
+
+Freeway data
+Arima -> Running
+NN -> 11% mape, maybe have to try different parameters (but theres clearly an improvement vs the loop sensor data)
+   -> Sudden large increase in the error
+
+
+Missing values: 
+	-> imputation using average of the last hour of traffic flow  
+	-> also possible : using the moment after too, didnt do it because i think past values are more indicative of current flow rates

@@ -12,6 +12,7 @@ library('ggplot2')
 library('forecast')
 library('tseries')
 library('chron')
+library('sas7bdat')
 ```
 
 
@@ -30,6 +31,23 @@ dtparts = t(as.data.frame(strsplit(dtimes," ")))
 row.names(dtparts) = NULL
 thetimes = chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
 myts <- ts(data$Count, start=1, end=480, frequency=96)
+
+```
+
+```{r}
+data = read.csv('freeway_data1.csv')
+
+colnames(data) = c("Date","Count")
+data$Date = as.character(data$Date)
+
+dtimes = data$Date
+head(data)
+#data$Date2 = as.Date(data$Date) 
+#head(data)
+dtparts = t(as.data.frame(strsplit(dtimes," ")))
+row.names(dtparts) = NULL
+thetimes = chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
+myts <- ts(data$Count, start=1, end=12096, frequency=96)
 
 ```
 

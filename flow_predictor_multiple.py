@@ -350,26 +350,26 @@ def model_results(trainX, trainY, testX, testY,model,ID_Espira):
 	layers_conf = []
 	units = []
 	activation = []
-	for i in range(len(model.layers)):
-	    layer = model.layers[i].get_config()
-	    layers_conf.append(layer)
-	    units.append(layer["units"])
-	    activation.append(layer["activation"])
-	if (os.path.isfile('metrics_comparison.txt')) and (os.stat("metrics_comparison.txt").st_size == 0):
-	    f = open("metrics_comparison.txt", "w+")
-	    f.write("N_layers,[units per layer], [activations]," + "\n")
-	    f.write("Metrics names: "  + str(model.metrics_names)+ "\n\n")
+	# for i in range(len(model.layers)):
+	#     layer = model.layers[i].get_config()
+	#     layers_conf.append(layer)
+	#     units.append(layer["units"])
+	#     activation.append(layer["activation"])
+	# if (os.path.isfile('metrics_comparison.txt')) and (os.stat("metrics_comparison.txt").st_size == 0):
+	#     f = open("metrics_comparison.txt", "w+")
+	#     f.write("N_layers,[units per layer], [activations]," + "\n")
+	#     f.write("Metrics names: "  + str(model.metrics_names)+ "\n\n")
 	    
-	    f.write(str(len(layers_conf)) + "," + str(units) + "," +  str(activation) +"\n")
-	    f.write("Train Set metrics :"  + str(trainScore) +"\n")
-	    f.write("Test Set metrics :"  + str(testScore) +"\n\n\n")
-	    f.close()
-	else:
-	    f = open("metrics_comparison.txt", "a+")
-	    f.write(str(len(layers_conf)) + "," + str(units) + "," +  str(activation) +"\n")
-	    f.write("Train Set metrics :"  + str(trainScore) +"\n")
-	    f.write("Test Set metrics :"  + str(testScore) +"\n\n\n")
-	    f.close()
+	#     f.write(str(len(layers_conf)) + "," + str(units) + "," +  str(activation) +"\n")
+	#     f.write("Train Set metrics :"  + str(trainScore) +"\n")
+	#     f.write("Test Set metrics :"  + str(testScore) +"\n\n\n")
+	#     f.close()
+	# else:
+	#     f = open("metrics_comparison.txt", "a+")
+	#     f.write(str(len(layers_conf)) + "," + str(units) + "," +  str(activation) +"\n")
+	#     f.write("Train Set metrics :"  + str(trainScore) +"\n")
+	#     f.write("Test Set metrics :"  + str(testScore) +"\n\n\n")
+	#     f.close()
 def evaluate_instance(filename, model):
 	output = open(str(filename) +".txt","w")
 	obs_df = pd.read_csv(filename)

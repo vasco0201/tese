@@ -1,23 +1,35 @@
 Next steps:
 
-
+-> Nas redes neuronais devia fazer qualquer coisa aos valores que são 0 para ver o mape do modelo das espiras? (pq assim o mape dá inf)
 -> Fazer um log para começar a registar resultados e tirar conclusoes
--> testar com espiras confluentes para ver se melhora os restultados (já está no notebook agora é preciso por em codigo)
--> Correr isto para todas as espiras e ver se os resultados sao semelhantes 
+-> Preciso de estudar mais a fundo os diferentes optimizers para ver qual o melhor
+-> testar com espiras confluentes para ver se melhora os restultados (já está no notebook agora é preciso por em codigo) - O caso testado não demonstrou melhorias
+-> Correr isto para todas as espiras e ver se os resultados sao semelhantes - In progress
    -> Se calhar não devia separar o dataset aleatoreamente né (:
+
    -> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
 -> incorporar o dataset completo (os 3 que temos atualmente)
 -> Descobrir os melhores parametros para a rede automaticamente
--> testar com datasets de outros papers
+-> testar com datasets de outros papers 
 
 
 
-Freeway data
+Freeway data (provided by Jianhua Guo)
 Arima -> Running
+	  -> Model params for the first freeway : (5,0,0)(0, 1, 0)[96]
+	  -> Split the set in training and testing sets
+	  -> Come up with a way to plot mean mape for each time of day 
 NN -> 11% mape, maybe have to try different parameters (but theres clearly an improvement vs the loop sensor data)
    -> Sudden large increase in the error
 
 
+
 Missing values: 
 	-> imputation using average of the last hour of traffic flow  
-	-> also possible : using the moment after too, didnt do it because i think past values are more indicative of current flow rates
+	-> Change it to average of before and after  the missing value
+
+
+Coisas interessantes para falar:
+
+Smoothing :
+	Tentei com Z-Score e agora estou a utilizar a média + 2* std dev para detectar outliers e faço a media dos valores adjacentes para imputar

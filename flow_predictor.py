@@ -10,6 +10,7 @@ import statistics
 from keras.models import Sequential
 from keras.layers import Dense
 from keras import optimizers
+from keras import regularizers
 import math
 
 
@@ -31,6 +32,17 @@ def create_dataset(data):
 	return np.array(X), np.array(Y)
 
 ######################### VISUALIZATION #######################
+def plot_loss(history):
+	fig = plt.figure()
+	plt.plot(history.history['loss'])
+	plt.title('model loss')
+	plt.ylabel('loss')
+	plt.xlabel('epoch')
+	plt.legend(['train', 'test'], loc='upper right')
+	plt.show()
+	fig.savefig("adam_w_l2_600.png",dpi=100)
+	plt.close(fig)
+
 def plot_changes(original, smooth, filename="avg2stdev"):
 	hours = [dt.strftime('%H:%M') for dt in datetime_range(datetime(2018, 8, 15, 0, 0), datetime(2018, 8, 15, 23, 59),timedelta(minutes=15))]
 	fig = plt.figure(2)
@@ -61,6 +73,7 @@ def plot_changes(original, smooth, filename="avg2stdev"):
 	ax.tick_params(axis='x', rotation=90)
 	fig.set_size_inches(40, 20)
 	fig.savefig(curr_dir + "\\smoothing\\" + str(filename) + ".png", dpi=200)
+	plt.close(fig)
 	#plt.show()
 
 def plot_results(pred, obsY, plot_name, flag):
@@ -301,20 +314,22 @@ def nn_model(params):
 	trainX, trainY = create_dataset(train_set)
 	testX, testY = create_dataset(test_set)
 	model = Sequential()
-	layer1 = Dense(32,input_dim=3, activation='relu')
-	layer2 = Dense(32, activation='relu')
+	layer1 = Dense(64,input_dim=3, activation='relu',kernel_regularizer=regularizers.l2(0.01))
+	layer2 = Dense(64, activation='relu',kernel_regularizer=regularizers.l2(0.01))
 	layer3 = Dense(32, activation='relu')
 	#layer3 = Dense(400, activation='relu')
 	model.add(layer1)
 	model.add(layer2)
-	model.add(layer3)
+	#model.add(layer3)
 	#model.add(Dense(8, activation='relu'))
 	model.add(Dense(1))
 	sgd = optimizers.SGD(lr=0.001)
 	rmsprop = optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0)
-	model.compile(loss='mean_squared_error', optimizer=rmsprop,metrics=['mape', 'mae', 'mse'])
-	model.fit(trainX, trainY, epochs=400, verbose=2)
-	return trainX, trainY, testX, testY,model
+	
+	adam=optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+	model.compile(loss='mean_squared_error', optimizer=adam,metrics=['mape', 'mae', 'mse'])
+	history= model.fit(trainX, trainY, epochs=600, verbose=2, batch_size=64,validation_split=0.2)
+	return trainX, trainY, testX, testY,model,history
 
 
 def model_results(trainX, trainY, testX, testY,model):
@@ -420,7 +435,9 @@ def main():
 	transform_data("train_2.csv", "train_formatted.csv")
 	transform_data("test_set.csv", "test_set2.csv")
 	# creates and trains the model
-	trainX, trainY, testX, testY, model = nn_model("cenas") #Eventualmente dar a opcao de escolher os hiperparametros
+	trainX, trainY, testX, testY, model, history= nn_model("cenas") #Eventualmente dar a opcao de escolher os hiperparametros
+
+	plot_loss(history)
 
 	#evaluate model
 	model_results(trainX, trainY, testX, testY,model)

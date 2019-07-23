@@ -1,6 +1,9 @@
 Next steps:
 
 -> Nas redes neuronais devia fazer qualquer coisa aos valores que são 0 para ver o mape do modelo das espiras? (pq assim o mape dá inf)
+-> Atualmente o modelo está overfitted porque val loss >> loss
+-> ver a média dos pesos para ver se há algum que seja absurdo
+-> try L1+L2 regularization
 -> Fazer um log para começar a registar resultados e tirar conclusoes
 -> Preciso de estudar mais a fundo os diferentes optimizers para ver qual o melhor
 -> testar com espiras confluentes para ver se melhora os restultados (já está no notebook agora é preciso por em codigo) - O caso testado não demonstrou melhorias
@@ -21,6 +24,7 @@ Arima -> Running
 	  -> Come up with a way to plot mean mape for each time of day 
 NN -> 11% mape, maybe have to try different parameters (but theres clearly an improvement vs the loop sensor data)
    -> Sudden large increase in the error
+   ->
 
 
 

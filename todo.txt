@@ -1,6 +1,10 @@
 Next steps:
 
 -> Nas redes neuronais devia fazer qualquer coisa aos valores que são 0 para ver o mape do modelo das espiras? (pq assim o mape dá inf)
+-> testar as resdes para 15,30,45 e 60 minutos
+-> Comparar com arima
+-> Experimentar com dados de dias homologos (semana passada e etc)
+-> Tabelas com os dados
 -> Atualmente o modelo está overfitted porque val loss >> loss
 -> ver a média dos pesos para ver se há algum que seja absurdo
 -> try L1+L2 regularization

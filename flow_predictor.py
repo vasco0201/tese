@@ -160,13 +160,27 @@ def get_data(ID_Espira, flag_test =0, test_date = np.datetime64('2018-08-27')):
 		#test_df  = dataset[(data >= test_date)]
 		#sys.exit()
 	#train_set
+
 	train_df.to_csv("train.csv", sep= ',', index=False)
 
 	#test_set
 	test_df.to_csv("test.csv", sep= ',', index=False)
 
 	return train_df, test_df
-
+def aggregate_data(dataset,filename):
+	new_data = []
+	for i in range(len(dataset)):
+		j = 1
+		temp=[]
+		while (j < len(dataset[i][1:])):
+			value = dataset[i][j]+dataset[i][j+1]
+			temp.append(value)
+			j+=2
+		temp.insert(0,dataset[i][0])
+		new_data.append(temp)
+	new_data = np.asarray(new_data)
+	pd.DataFrame(new_data).to_csv(str(filename) + ".csv", sep=',', index=False)
+	return new_data
 
 def transform_data(in_file, out_file, nrows=-1):
     in_file = open(str(in_file),"r")
@@ -422,6 +436,10 @@ def main():
 	smooth_train, df_train= smooth_data(train_cp, "train_2") 
 	smooth_test, df_test = smooth_data(test_cp, "test_2")
 
+
+	cenas = aggregate_data(smooth_train,"train_30min")
+	cenas = aggregate_data(smooth_test,"test_30min")
+
 	#smoothing with z score
 	#NOT IN USE
 	#zscore_train = smooth_zscore(train_cp)
@@ -447,6 +465,9 @@ def main():
 	transform_data("test_2.csv", "3day_unsmoothed.csv",3)
 	transform_data("train_2.csv", "train_formatted.csv")
 	transform_data("test_set.csv", "test_set2.csv")
+
+	transform_data("train_30min.csv","train_formatted.csv")
+	transform_data("test_30min.csv","test_formatted.csv")
 	# creates and trains the model
 	trainX, trainY = get_nn_data('train_formatted.csv')
 	testX, testY = get_nn_data('test_formatted.csv')
@@ -465,10 +486,10 @@ def main():
 	print(len(train), len(test))
 
 
-	f_trainX, f_trainY = freeway_dataset(train,3)
-	f_testX, f_testY =freeway_dataset(test,3)
+	#f_trainX, f_trainY = freeway_dataset(train,3)
+	#f_testX, f_testY =freeway_dataset(test,3)
 
-	model, history= nn_model(f_trainX,f_trainY,"cenas") #Eventualmente dar a opcao de escolher os hiperparametros
+	model, history= nn_model(trainX,trainY,"cenas") #Eventualmente dar a opcao de escolher os hiperparametros
 
 	plot_loss(history)
 
@@ -479,8 +500,8 @@ def main():
 	#FIXME HAVE TO CREATE SLIDING WINDOW FOR THIS NEW DATASET
 	#evaluate_model('train_formatted.csv',model)
 	#evaluate_model('test_formatted.csv',model)
-	evaluate_model(f_trainX, model, 1,f_trainY)
-	evaluate_model(f_testX, model, 1,f_testY)
+	evaluate_model(trainX, model, 1,trainY)
+	evaluate_model(testX, model, 1,testY)
 	
 	#plot_results (predicted, observed, output file name, flag to choose how many days to plot)
 	#plot_results(pred, obsY, "cenas",3) #change filename dynamically

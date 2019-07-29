@@ -1,7 +1,11 @@
 Next steps:
 
 -> Nas redes neuronais devia fazer qualquer coisa aos valores que são 0 para ver o mape do modelo das espiras? (pq assim o mape dá inf)
--> testar as resdes para 15,30,45 e 60 minutos
+-> testar as resdes para 30,45 e 60 minutos feito, só falta registar resultados
+-> comparar performance com e sem smoothing
+-> tentar melhorar performance utilizando early stopping
+-> aumentar ligeiramente o lr
+-> MAE é menor mas MSE aumenta?????????
 -> Comparar com arima
 -> Experimentar com dados de dias homologos (semana passada e etc)
 -> Tabelas com os dados

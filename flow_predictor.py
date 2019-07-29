@@ -167,19 +167,38 @@ def get_data(ID_Espira, flag_test =0, test_date = np.datetime64('2018-08-27')):
 	test_df.to_csv("test.csv", sep= ',', index=False)
 
 	return train_df, test_df
-def aggregate_data(dataset,filename):
+def aggregate_data(dataset,filename, interval):
 	new_data = []
 	for i in range(len(dataset)):
 		j = 1
 		temp=[]
+		if (int(interval) == 15):
+			
+			pd.DataFrame(dataset).to_csv(str(filename) + "_15.csv", sep=',', index=False)
+			return dataset
+
 		while (j < len(dataset[i][1:])):
-			value = dataset[i][j]+dataset[i][j+1]
-			temp.append(value)
-			j+=2
+			if int(interval) == 30:
+				print("30")
+				value = dataset[i][j]+dataset[i][j+1]
+				temp.append(value)
+				j+=2
+			elif int(interval) == 45:
+				value = dataset[i][j]+dataset[i][j+1]+ dataset[i][j+2]
+				temp.append(value)
+				j+=3
+			elif int(interval) == 60:
+				value = dataset[i][j]+dataset[i][j+1]+ dataset[i][j+2] + dataset[i][j+3]
+				temp.append(value)
+				j+=4
+			else: 
+				print("Invalid interval, using default : 15 min")
+				pd.DataFrame(dataset).to_csv(str(filename) + "_15.csv", sep=',', index=False)
+				return dataset
 		temp.insert(0,dataset[i][0])
 		new_data.append(temp)
 	new_data = np.asarray(new_data)
-	pd.DataFrame(new_data).to_csv(str(filename) + ".csv", sep=',', index=False)
+	pd.DataFrame(new_data).to_csv(str(filename) + "_" + str(interval) + ".csv", sep=',', index=False)
 	return new_data
 
 def transform_data(in_file, out_file, nrows=-1):
@@ -326,7 +345,7 @@ def nn_model(trainX,trainY,params):
 	
 	#compiling the model
 	model.compile(loss='mean_squared_error', optimizer=adam,metrics=['mse','mae'])
-	history= model.fit(trainX, trainY, epochs=100, verbose=2, batch_size=64,validation_split=0.2)
+	history= model.fit(trainX, trainY, epochs=100, verbose=0, batch_size=64,validation_split=0.2)
 	
 	return model,history
 
@@ -335,7 +354,7 @@ def model_results(trainX, trainY, testX, testY,model):
 	
 	# Estimate model performance
 	trainScore = model.evaluate(trainX, trainY, verbose=0)
-	#print(model.metrics_names)
+	print(model.metrics_names)
 	#print(trainScore)
 	#print('Train Score: %.2f MSE (%.2f RMSE)' % (trainScore, math.sqrt(trainScore)))
 	testScore = model.evaluate(testX, testY, verbose=0)
@@ -388,11 +407,13 @@ def evaluate_model(filename, model,flag=0, obsY="data"):
 				print("loool")
 				break
 			mape.append(err)
-		print(sum(mape)*100/(len(mape)))
+		m_mape= sum(mape)*100/(len(mape))
+		print("MAPE: ", m_mape)
 
 		score = model.evaluate(obsX, obsY, verbose=0)
 		print("MAE:" ,score[2] ,"MSE: ", score[1])
 		#plot_results(pred, obsY, "teste",1)
+		return m_mape, score[2], score[1]
 	else:
 		pred = model.predict(filename)
 		mape = []
@@ -403,10 +424,12 @@ def evaluate_model(filename, model,flag=0, obsY="data"):
 				print("loool")
 				break
 			mape.append(err)
-		print("MAPE: ", sum(mape)*100/(len(mape)))
+		m_mape= sum(mape)*100/(len(mape))
+		print("MAPE: ", m_mape)
 
 		score = model.evaluate(filename, obsY, verbose=0)
 		print("MAE:" ,score[2] ,"MSE: ", score[1])
+		return m_mape, score[2], score[1]
 
 
 
@@ -436,9 +459,13 @@ def main():
 	smooth_train, df_train= smooth_data(train_cp, "train_2") 
 	smooth_test, df_test = smooth_data(test_cp, "test_2")
 
-
-	cenas = aggregate_data(smooth_train,"train_30min")
-	cenas = aggregate_data(smooth_test,"test_30min")
+	interval = input("Escolha o horizonte de predicao (15,30,45 ou 60): ")
+	if not interval:
+		interval = 15
+	cenas = aggregate_data(smooth_train,"train", interval)
+	cenas = aggregate_data(smooth_test,"test",interval)
+	transform_data("train_"+str(interval)+".csv","train_formatted.csv")
+	transform_data("test_"+str(interval)+".csv","test_formatted.csv")
 
 	#smoothing with z score
 	#NOT IN USE
@@ -461,17 +488,23 @@ def main():
 	#plot_changes(test, df_test)
 	
 	#prepares the data for the nn 
-	transform_data("test_2.csv", "test_formatted.csv")
-	transform_data("test_2.csv", "3day_unsmoothed.csv",3)
-	transform_data("train_2.csv", "train_formatted.csv")
-	transform_data("test_set.csv", "test_set2.csv")
+	#transform_data("test_2.csv", "3day_unsmoothed.csv",3) 
 
-	transform_data("train_30min.csv","train_formatted.csv")
-	transform_data("test_30min.csv","test_formatted.csv")
+	#transform_data("test_2.csv", "test_formatted.csv")
+	#transform_data("train_2.csv", "train_formatted.csv")
+	
+	transform_data("test_set.csv", "test_set2.csv") #specific day testing data 
+
+	
+
+	#transform_data("train_30min.csv","train_formatted.csv")
+	#transform_data("test_30min.csv","test_formatted.csv")
+	
 	# creates and trains the model
 	trainX, trainY = get_nn_data('train_formatted.csv')
 	testX, testY = get_nn_data('test_formatted.csv')
 
+	################################################################
 	#freeway dataset
 	dataframe = pd.read_csv('freeway_data1.csv', usecols=[1], engine='python')
 	dataset = dataframe.values
@@ -489,9 +522,64 @@ def main():
 	#f_trainX, f_trainY = freeway_dataset(train,3)
 	#f_testX, f_testY =freeway_dataset(test,3)
 
-	model, history= nn_model(trainX,trainY,"cenas") #Eventualmente dar a opcao de escolher os hiperparametros
-
+	###################################################################
+	run = 0
+	model = ""
+	history = ""
+	train_runs = [[],[],[]]
+	test_runs = [[],[],[]]
+	loltrain_runs = [[],[],[]]
+	loltest_runs = [[],[],[]]
+	while run < 2:
+		model, history= nn_model(trainX,trainY,"cenas") #Eventualmente dar a opcao de escolher os hiperparametros
+		mape, mae, mse = evaluate_model(trainX, model, 1,trainY)
+		loltrain_runs[0].append(mape)
+		loltrain_runs[1].append(mae)
+		loltrain_runs[2].append(mse)
+		mape, mae, mse = evaluate_model('train_formatted.csv',model)
+		train_runs[0].append(mape)
+		train_runs[1].append(mae)
+		train_runs[2].append(mse)
+		
+		mape, mae, mse = evaluate_model(testX, model, 1,testY)
+		loltest_runs[0].append(mape)
+		loltest_runs[1].append(mae)
+		loltest_runs[2].append(mse)
+		mape, mae, mse = evaluate_model('test_formatted.csv',model)
+		test_runs[0].append(mape)
+		test_runs[1].append(mae)
+		test_runs[2].append(mse)
+		
+		run +=1
 	plot_loss(history)
+	print("----------------------------------------------")
+	print("Average of 3 runs:  ")
+	
+	print("Train")
+	print("MAPE: ", sum(train_runs[0])/len(train_runs[0]))
+	print("MAE: ",sum(train_runs[1])/len(train_runs[1]))
+	print("MSE: ",sum(train_runs[2])/len(train_runs[2]))
+
+	print("Test")
+	print("MAPE: ", sum(test_runs[0])/len(test_runs[0]))
+	print("MAE: ",sum(test_runs[1])/len(test_runs[1]))
+	print("MSE: ",sum(test_runs[2])/len(test_runs[2]))
+
+
+	print("LOOOOOOOOOOLTrain")
+	print("MAPE: ", sum(loltrain_runs[0])/len(loltrain_runs[0]))
+	print("MAE: ",sum(loltrain_runs[1])/len(loltrain_runs[1]))
+	print("MSE: ",sum(loltrain_runs[2])/len(loltrain_runs[2]))
+
+	print("LOOOOOOOOOOLTest")
+	print("MAPE: ", sum(loltest_runs[0])/len(loltest_runs[0]))
+	print("MAE: ",sum(loltest_runs[1])/len(loltest_runs[1]))
+	print("MSE: ",sum(loltest_runs[2])/len(loltest_runs[2]))
+
+
+
+	print("----------------------------------------------")
+
 
 	#evaluate model
 	#model_results(trainX, trainY, testX, testY,model)
@@ -500,8 +588,7 @@ def main():
 	#FIXME HAVE TO CREATE SLIDING WINDOW FOR THIS NEW DATASET
 	#evaluate_model('train_formatted.csv',model)
 	#evaluate_model('test_formatted.csv',model)
-	evaluate_model(trainX, model, 1,trainY)
-	evaluate_model(testX, model, 1,testY)
+		
 	
 	#plot_results (predicted, observed, output file name, flag to choose how many days to plot)
 	#plot_results(pred, obsY, "cenas",3) #change filename dynamically

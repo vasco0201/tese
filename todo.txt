@@ -1,28 +1,31 @@
 Next steps:
 
--> Nas redes neuronais devia fazer qualquer coisa aos valores que são 0 para ver o mape do modelo das espiras? (pq assim o mape dá inf)
--> testar as resdes para 30,45 e 60 minutos feito, só falta registar resultados
--> comparar performance com e sem smoothing
+MAPE hack : somar um ao pred e ao obs para nao dar inf
+-> aumentar o numero de epochs
+-> comparar performance com e sem smoothing (no test set)
 -> tentar melhorar performance utilizando early stopping
 -> aumentar ligeiramente o lr
--> MAE é menor mas MSE aumenta?????????
 -> Comparar com arima
 -> Experimentar com dados de dias homologos (semana passada e etc)
--> Tabelas com os dados
--> Atualmente o modelo está overfitted porque val loss >> loss
--> ver a média dos pesos para ver se há algum que seja absurdo
+-> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
+-> testar com datasets de outros papers - in progress
+
+
+Already Done
+-> testar as resdes para 30,45 e 60 minutos feito, só falta registar resultados -> Feito tá no docs
+-> Atualmente o modelo está overfitted porque val loss >> loss -> solved with weight regularization and less epochs
+-> ver a média dos pesos para ver se há algum que seja absurdo ->
 -> try L1+L2 regularization
 -> Fazer um log para começar a registar resultados e tirar conclusoes
--> Preciso de estudar mais a fundo os diferentes optimizers para ver qual o melhor
+-> Preciso de estudar mais a fundo os diferentes optimizers para ver qual o melhor - Irrelevante o adam é melhor
 -> testar com espiras confluentes para ver se melhora os restultados (já está no notebook agora é preciso por em codigo) - O caso testado não demonstrou melhorias
 -> Correr isto para todas as espiras e ver se os resultados sao semelhantes - In progress
    -> Se calhar não devia separar o dataset aleatoreamente né (:
-
-   -> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
 -> incorporar o dataset completo (os 3 que temos atualmente)
 -> Descobrir os melhores parametros para a rede automaticamente
--> testar com datasets de outros papers 
 
+Questions:
+	-> MAE é menor mas MSE aumenta?????????
 
 
 Freeway data (provided by Jianhua Guo)

@@ -35,7 +35,7 @@ myts <- ts(data$Count, start=1, end=480, frequency=96)
 ```
 
 ```{r}
-data = read.csv('freeway_data1.csv')
+data = read.csv("freeway_data/freeway_data2.csv")
 
 colnames(data) = c("Date","Count")
 data$Date = as.character(data$Date)
@@ -47,14 +47,18 @@ head(data)
 dtparts = t(as.data.frame(strsplit(dtimes," ")))
 row.names(dtparts) = NULL
 thetimes = chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
-myts <- ts(data$Count, start=1, end=12096, frequency=96)
+train <- subset(data, Date < "2002-02-01" )
+test <- subset(data, Date >= "2002-02-01" )
+myts_train <- ts(train$Count, start=1, end=2976, frequency=96)
+                 
+myts_test <- ts(test$Count, start=1, end=8832, frequency=96)
 
 ```
 
 
 ```{r}
-model = auto.arima(myts, seasonal = T)
-pred = predict(model,n.ahead = 96)
+model = auto.arima(myts_train, seasonal = TRUE)
+pred = predict(model,n.ahead = 672)
 save(model, file = "arima_model_freeway.rda")
 
 ```

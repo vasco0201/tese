@@ -12,8 +12,9 @@ import statistics
 from keras.models import Sequential
 from keras.layers import Dense
 from keras import optimizers
+from keras import regularizers
 import math
-
+import gc
 
 
 curr_dir = os.getcwd()
@@ -151,8 +152,6 @@ def split_data(dataset,ID_Espira, flag_test =0, test_date = np.datetime64('2018-
 		#train_df = dataset[()]
 		#test_df  = dataset[(data >= test_date)]
 		#sys.exit()
-	
-	dt2.to_csv("limited_data.csv", sep= ',', index=False)
 	#train_set
 	train_df.to_csv("train.csv", sep= ',', index=False)
 
@@ -304,19 +303,22 @@ def nn_model(params):
 	trainX, trainY = create_dataset(train_set)
 	testX, testY = create_dataset(test_set)
 	model = Sequential()
-	layer1 = Dense(32,input_dim=3, activation='relu')
-	layer2 = Dense(32, activation='relu')
-	layer3 = Dense(32, activation='relu')
+	layer1 = Dense(64,input_dim=3, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
+	layer2 = Dense(64, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
+	layer3 = Dense(32, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
 	#layer3 = Dense(400, activation='relu')
 	model.add(layer1)
 	model.add(layer2)
-	model.add(layer3)
-	#model.add(Dense(8, activation='relu'))
+	#model.add(layer3)
 	model.add(Dense(1))
+	#optimizers 
 	sgd = optimizers.SGD(lr=0.001)
 	rmsprop = optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0)
-	model.compile(loss='mean_squared_error', optimizer=rmsprop,metrics=['mape', 'mae', 'mse'])
-	model.fit(trainX, trainY, epochs=200, verbose=2)
+	adam=optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+	
+	#compiling the model
+	model.compile(loss='mean_squared_error', optimizer=adam,metrics=['mse','mae','mape'])
+	history= model.fit(trainX, trainY, epochs=200, verbose=2, batch_size=64,validation_split=0.2)
 	return trainX, trainY, testX, testY,model
 
 
@@ -335,15 +337,15 @@ def model_results(trainX, trainY, testX, testY,model,ID_Espira):
 	# generate predictions for training
 	trainPredict = model.predict(trainX)
 	testPredict = model.predict(testX)
-
+	print("Train Results:", trainScore[2], ",", trainScore[1])
 	output = open("train_score.txt","a+")
 	#mae, rmse
-	output.write(str(ID_Espira) + "," + str(trainScore[2]) +"," + str(trainScore[3]))
+	output.write(str(ID_Espira) + "," + str(trainScore[2]) +"," + str(trainScore[1])+"\n")
 	output.close()
 
 	output = open("test_score.txt","a+")
 	#mae, rmse
-	output.write(str(ID_Espira) + "," + str(testScore[2]) +"," + str(testScore[3]))
+	output.write(str(ID_Espira) + "," + str(testScore[2]) +"," + str(testScore[1])+"\n")
 	output.close()
 	#print(trainPredict)
 	#print(trainY)
@@ -400,62 +402,71 @@ def main():
 	for s in range(len(unique_ids)):
 		print("iteracao: ", s+1)
 		print("espira: ", unique_ids[s])
-		dt2, train_set, test_set, dataset = split_data(all_data,unique_ids[s], 1, test_date)
-		#dt2, train_set, test_set, dataset = get_data(ID_Espira)
-		train_cp = copy.deepcopy(train_set)
-		test_cp = copy.deepcopy(test_set)
-		
-		#smoothing both sets
-		smooth_train, df_train= smooth_data(train_cp, "train_2") 
-		smooth_test, df_test = smooth_data(test_cp, "test_2")
+		try:
+			dt2, train_set, test_set, dataset = split_data(all_data,unique_ids[s], 0, test_date)
+			#dt2, train_set, test_set, dataset = get_data(ID_Espira)
+			train_cp = copy.deepcopy(train_set)
+			test_cp = copy.deepcopy(test_set)
+			
+			#smoothing both sets
+			smooth_train, df_train= smooth_data(train_cp, "train_2") 
+			smooth_test, df_test = smooth_data(test_cp, "test_2")
 
-		#smoothing with z score
-		#NOT IN USE
-		#zscore_train = smooth_zscore(train_cp)
+			#smoothing with z score
+			#NOT IN USE
+			#zscore_train = smooth_zscore(train_cp)
 
-		#Original datasets before smoothing
+			#Original datasets before smoothing
 
-		dataframe = pd.read_csv('train.csv')
-		dataset = dataframe.drop(columns=["Data"])
-		dataset = dataset.values
-		train = dataset.astype('float32')
+			dataframe = pd.read_csv('train.csv')
+			dataset = dataframe.drop(columns=["Data"])
+			dataset = dataset.values
+			train = dataset.astype('float32')
 
-		dataframe = pd.read_csv('test.csv')
-		dataset = dataframe.drop(columns=["Data"])
-		dataset = dataset.values
-		test = dataset.astype('float32')
-		
-		# plot differences between original and smoothed data
-		plot_changes(train, df_train, unique_ids[s])
-		#plot_changes(test, df_test)
-		
-
-
-		#prepares the data for the nn 
-		transform_data("dados_nn.csv", "new_f.csv")
-		transform_data("dados_nn.csv", "3day_nn.csv", 3)
-		#transform_data("train2.csv", "smoothed_data.csv") not needed anymore
-		transform_data("test_2.csv", "test_formatted.csv")
-		transform_data("test_2.csv", "3day_unsmoothed.csv",3)
-		transform_data("train_2.csv", "train_formatted.csv")
-		transform_data("test_set.csv", "test_set2.csv")
-		# creates and trains the model
-		trainX, trainY, testX, testY, model = nn_model("cenas") #Eventualmente dar a opcao de escolher os hiperparametros
-
-		#evaluate model
-		model_results(trainX, trainY, testX, testY,model, unique_ids[s])
-
-		#plot the results for the first three days
-		#obs_df = pd.read_csv('3day_unsmoothed.csv')
-		#FIXME HAVE TO CREATE SLIDING WINDOW FOR THIS NEW DATASET
-		#evaluate_instance('test_set2.csv',model)
+			dataframe = pd.read_csv('test.csv')
+			dataset = dataframe.drop(columns=["Data"])
+			dataset = dataset.values
+			test = dataset.astype('float32')
+			
+			# plot differences between original and smoothed data
+			plot_changes(train, df_train, unique_ids[s])
+			#plot_changes(test, df_test)
+			
 
 
-		obs_df = pd.read_csv("3day_unsmoothed.csv")
-		obs = obs_df.values
-		obs = obs.astype('float32')
-		obsX, obsY = create_dataset(obs)
-		pred = model.predict(obsX)
-		#plot_results (predicted, observed, output file name, flag to choose how many days to plot)
-		plot_results(pred, obsY, unique_ids[s],3) #change filename dynamically
+			#prepares the data for the nn 
+			
+			transform_data("test_2.csv", "test_formatted.csv")
+			transform_data("train_2.csv", "train_formatted.csv")
+
+			
+			transform_data("test_2.csv", "3day_unsmoothed.csv",3)
+			transform_data("test_set.csv", "test_set2.csv")
+			# creates and trains the model
+			trainX, trainY, testX, testY, model = nn_model("cenas") #Eventualmente dar a opcao de escolher os hiperparametros
+
+			#evaluate model
+			model_results(trainX, trainY, testX, testY,model, unique_ids[s])
+
+			#plot the results for the first three days
+			#obs_df = pd.read_csv('3day_unsmoothed.csv')
+			#FIXME HAVE TO CREATE SLIDING WINDOW FOR THIS NEW DATASET
+			#evaluate_instance('test_set2.csv',model)
+
+
+			obs_df = pd.read_csv("3day_unsmoothed.csv")
+			obs = obs_df.values
+			obs = obs.astype('float32')
+			obsX, obsY = create_dataset(obs)
+			pred = model.predict(obsX)
+			#plot_results (predicted, observed, output file name, flag to choose how many days to plot)
+			plot_results(pred, obsY, unique_ids[s],3) #change filename dynamically
+			gc.collect()
+		except Exception as e:
+			f = open("log_multi.txt","a+")
+			f.write("Iteracao: " + str(s+1) + " , " + "Espira: " + str(unique_ids[s]) +"\n")
+			f.write("Erro:\n" + str(e) +"\n\n\n")
+			f.close()
+			continue
+
 main()

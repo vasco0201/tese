@@ -47,8 +47,8 @@ head(data)
 dtparts = t(as.data.frame(strsplit(dtimes," ")))
 row.names(dtparts) = NULL
 thetimes = chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
-train <- subset(data, Date < "2002-02-01" )
-test <- subset(data, Date >= "2002-02-01" )
+train <- subset(data, Date < "2002-03-01" )
+test <- subset(data, Date >= "2002-03-01" )
 myts_train <- ts(train$Count, start=1, end=2976, frequency=96)
                  
 myts_test <- ts(test$Count, start=1, end=8832, frequency=96)
@@ -66,18 +66,25 @@ save(model, file = "arima_model_freeway.rda")
 
 ```{r}
 
-obs_data = read.csv('/home/vasco/tese/test_data.csv')
+obs_data = test[1:96,]
 obs = obs_data$Count
 
+pred = predict(model,n.ahead = 96)
 pred_values = pred$pred
 pred_values = as.numeric(pred_values)
 pred_values
+
 x = c(1:96)
 plot(x,pred_values)
 lines(x, pred_values, col='red')
 lines(x,obs, col = 'blue')
 legend("topright", legend = c("pred", "obs"), col = c('red','blue'), pch = "-", pt.cex = 5)
 
+
+mape <- function(error,obs)
+{
+    mean(100*abs(error)/obs)
+}
 
 mae <- function(error)
 {
@@ -91,7 +98,8 @@ rmse <- function(error)
  
 error <- pred_values-obs
 
-maemaError = mae(error)
+mapeError = mape(error,obs)
+maeError = mae(error)
 rmsError = rmse(error)
 
 ```
@@ -100,5 +108,10 @@ rmsError = rmse(error)
 
 model_arima =load("arima_model_freeway.rda")
 
+
+
+orderNS<-c(model$arma[1], model$arma[6] , model$arma[2])
+seasonalOrder <- c(model$arma[3], model$arma[7] , model$arma[4])
+new_model = Arima(myts_train,order=orderNS,seasonal = list(order = seasonalOrder,period=96))
 ```
 

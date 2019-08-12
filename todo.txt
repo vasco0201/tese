@@ -1,11 +1,11 @@
 Next steps:
 
 MAPE hack : somar um ao pred e ao obs para nao dar inf
--> aumentar o numero de epochs
+-> aumentar o numero de epochs : 200 melhora ligeiramente aumentar para 300
 -> comparar performance com e sem smoothing (no test set)
 -> tentar melhorar performance utilizando early stopping
 -> aumentar ligeiramente o lr
--> Comparar com arima
+-> Comparar com arima - running ~~ Similar mas o arima é mais chato de retreinar 
 -> Experimentar com dados de dias homologos (semana passada e etc)
 -> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
 -> testar com datasets de outros papers - in progress
@@ -22,10 +22,13 @@ Already Done
 -> Correr isto para todas as espiras e ver se os resultados sao semelhantes - In progress
    -> Se calhar não devia separar o dataset aleatoreamente né (:
 -> incorporar o dataset completo (os 3 que temos atualmente)
--> Descobrir os melhores parametros para a rede automaticamente
+-> Descobrir os melhores parametros para a rede automaticamente - n vale a pena
+
 
 Questions:
 	-> MAE é menor mas MSE aumenta?????????
+	-> Val loss ligeiramente menor do que a loss
+
 
 
 Freeway data (provided by Jianhua Guo)

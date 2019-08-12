@@ -145,7 +145,7 @@ def get_data(ID_Espira, flag_test =0, test_date = np.datetime64('2018-08-27')):
 	test_df = dt2[~msk]
 
 	dataset = dataset.drop(columns=["index"])
-	
+	print(dataset.head())
 	if flag_test == 1:
 		#creating a new testing data set for comparison with Sarima Model or other models
 		test_set = dataset[(dataset['Data'] == str(test_date))]
@@ -345,11 +345,11 @@ def nn_model(trainX,trainY,params):
 	#optimizers 
 	sgd = optimizers.SGD(lr=0.001)
 	rmsprop = optimizers.RMSprop(lr=0.001, rho=0.9, epsilon=None, decay=0.0)
-	adam=optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+	adam=optimizers.Adam(lr=0.005, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
 	
 	#compiling the model
 	model.compile(loss='mean_squared_error', optimizer=adam,metrics=['mse','mae','mape'])
-	history= model.fit(trainX, trainY, epochs=200, verbose=0, batch_size=64,validation_split=0.2)
+	history= model.fit(trainX, trainY, epochs=200, verbose=2, batch_size=64,validation_split=0.2)
 	
 	return model,history
 
@@ -481,7 +481,7 @@ def freeway_preprocess(filename,interval=15):
 def main():
 	#print("primeira linha da main")
 	#ID_Espira = input("Coloque id da espira: ")
-	ID_Espira = "4_ct4"
+	ID_Espira = "14_ct12"
 	test_date = np.datetime64('2018-08-27')
 	train_set, test_set = get_data(ID_Espira,0, test_date)
 	
@@ -493,15 +493,15 @@ def main():
 	smooth_train, df_train= smooth_data(train_cp, "train_2") 
 	smooth_test, df_test = smooth_data(test_cp, "test_2")
 
-	#interval = input("Escolha o horizonte de predicao (15,30,45 ou 60): ")
-	#if not interval:
-	#	interval = 15
+	interval = input("Escolha o horizonte de predicao (15,30,45 ou 60): ")
+	if not interval:
+		interval = 15
 	#for interval in [15,30,45,60]:
 
-	#	cenas = aggregate_data(smooth_train,"train", interval)
-	#	cenas = aggregate_data(smooth_test,"test",interval)
-	#	transform_data("train_"+str(interval)+".csv","train_formatted.csv")
-	#	transform_data("test_"+str(interval)+".csv","test_formatted.csv")
+	cenas = aggregate_data(smooth_train,"train", interval)
+	cenas = aggregate_data(smooth_test,"test",interval)
+	transform_data("train_"+str(interval)+".csv","train_formatted.csv")
+	transform_data("test_"+str(interval)+".csv","test_formatted.csv")
 
 		#smoothing with z score
 		#NOT IN USE
@@ -537,8 +537,8 @@ def main():
 	#transform_data("test_30min.csv","test_formatted.csv")
 	
 	# creates and trains the model
-	#trainX, trainY = get_nn_data('train_formatted.csv')
-	#testX, testY = get_nn_data('test_formatted.csv')
+	trainX, trainY = get_nn_data('train_formatted.csv')
+	testX, testY = get_nn_data('test_formatted.csv')
 
 	################################################################
 	#freeway dataset
@@ -552,80 +552,76 @@ def main():
 	# print(len(train), len(test))
 
 
-	for interval in [15,30,45,60]:
+	#for interval in [15,30,45,60]:
 
-		train, test = freeway_preprocess("freeway_data/freeway_data2.csv",interval)
+		#train, test = freeway_preprocess("freeway_data/freeway_data2.csv",interval)
 		#print("Freeway data length")
-		print(len(train), len(test))
+		#print(len(train), len(test))
 
-		trainX, trainY = freeway_dataset(train,3)
-		testX, testY =freeway_dataset(test,3)
+		#trainX, trainY = freeway_dataset(train,3)
+		#testX, testY =freeway_dataset(test,3)
 
 		###################################################################
-		run = 0
-		model = ""
-		history = ""
-		train_runs = [[],[],[]]
-		test_runs = [[],[],[]]
-		loltrain_runs = [[],[],[],[]]#alterar para 3
-		loltest_runs = [[],[],[],[]]
-		while run < 2:
-			model, history= nn_model(trainX,trainY,"cenas") #Eventualmente dar a opcao de escolher os hiperparametros
-			mape, mae, mse,rmape= evaluate_model(trainX, model, 1,trainY)
-			loltrain_runs[0].append(mape)
-			loltrain_runs[1].append(mae)
-			loltrain_runs[2].append(mse)
-			loltrain_runs[3].append(rmape)
-			#mape, mae, mse = evaluate_model('train_formatted.csv',model)
-			#train_runs[0].append(mape)
-			#train_runs[1].append(mae)
-			#train_runs[2].append(mse)
-			
-			mape, mae, mse,rmape = evaluate_model(testX, model, 1,testY)
-			loltest_runs[0].append(mape)
-			loltest_runs[1].append(mae)
-			loltest_runs[2].append(mse)
-			loltest_runs[3].append(rmape)
-
-			#mape, mae, mse = evaluate_model('test_formatted.csv',model)
-			#test_runs[0].append(mape)
-			#test_runs[1].append(mae)
-			#test_runs[2].append(mse)
-			
-			run +=1
-		plot_loss(history,interval)
-		print("----------------------------------------------")
-		print("Data Aggregation interval: ",interval)
-		print("Average of 3 runs:  ")
+	run = 0
+	model = ""
+	history = ""
+	train_runs = [[],[],[],[]]#alterar para 3
+	test_runs = [[],[],[],[]]
+	while run < 2:
+		model, history= nn_model(trainX,trainY,"cenas") #Eventualmente dar a opcao de escolher os hiperparametros
+		mape, mae, mse,rmape= evaluate_model(trainX, model, 1,trainY)
+		train_runs[0].append(mape)
+		train_runs[1].append(mae)
+		train_runs[2].append(mse)
+		train_runs[3].append(rmape)
+		#mape, mae, mse = evaluate_model('train_formatted.csv',model)
+		#train_runs[0].append(mape)
+		#train_runs[1].append(mae)
+		#train_runs[2].append(mse)
 		
-		# print("Train")
-		# print("MAPE: ", sum(train_runs[0])/len(train_runs[0]))
-		# print("MAE: ",sum(train_runs[1])/len(train_runs[1]))
-		# print("MSE: ",sum(train_runs[2])/len(train_runs[2]))
+		mape, mae, mse,rmape = evaluate_model(testX, model, 1,testY)
+		test_runs[0].append(mape)
+		test_runs[1].append(mae)
+		test_runs[2].append(mse)
+		test_runs[3].append(rmape)
 
-		# print("Test")
-		# print("MAPE: ", sum(test_runs[0])/len(test_runs[0]))
-		# print("MAE: ",sum(test_runs[1])/len(test_runs[1]))
-		# print("MSE: ",sum(test_runs[2])/len(test_runs[2]))
-
-
-		print("Train")
-		print("MAPE: ", sum(loltrain_runs[0])/len(loltrain_runs[0]))
-		print("REAL MAPE: ", sum(loltrain_runs[3])/len(loltrain_runs[3]))
-		print("MAE: ",sum(loltrain_runs[1])/len(loltrain_runs[1]))
-		print("MSE: ",sum(loltrain_runs[2])/len(loltrain_runs[2]))
-
-		print("Test")
-		print("MAPE: ", sum(loltest_runs[0])/len(loltest_runs[0]))
-		print("REAL MAPE: ", sum(loltest_runs[3])/len(loltest_runs[3]))
-		print("MAE: ",sum(loltest_runs[1])/len(loltest_runs[1]))
-		print("MSE: ",sum(loltest_runs[2])/len(loltest_runs[2]))
-
-
-
-		print("----------------------------------------------")
-
+		#mape, mae, mse = evaluate_model('test_formatted.csv',model)
+		#test_runs[0].append(mape)
+		#test_runs[1].append(mae)
+		#test_runs[2].append(mse)
 		break
+		run +=1
+	plot_loss(history,interval)
+	print("----------------------------------------------")
+	print("Data Aggregation interval: ",interval)
+	print("Average of 3 runs:  ")
+	
+	# print("Train")
+	# print("MAPE: ", sum(train_runs[0])/len(train_runs[0]))
+	# print("MAE: ",sum(train_runs[1])/len(train_runs[1]))
+	# print("MSE: ",sum(train_runs[2])/len(train_runs[2]))
+
+	# print("Test")
+	# print("MAPE: ", sum(test_runs[0])/len(test_runs[0]))
+	# print("MAE: ",sum(test_runs[1])/len(test_runs[1]))
+	# print("MSE: ",sum(test_runs[2])/len(test_runs[2]))
+
+
+	print("Train")
+	print("MAPE: ", sum(train_runs[0])/len(train_runs[0]))
+	print("REAL MAPE: ", sum(train_runs[3])/len(train_runs[3]))
+	print("MAE: ",sum(train_runs[1])/len(train_runs[1]))
+	print("MSE: ",sum(train_runs[2])/len(train_runs[2]))
+
+	print("Test")
+	print("MAPE: ", sum(test_runs[0])/len(test_runs[0]))
+	print("REAL MAPE: ", sum(test_runs[3])/len(test_runs[3]))
+	print("MAE: ",sum(test_runs[1])/len(test_runs[1]))
+	print("MSE: ",sum(test_runs[2])/len(test_runs[2]))
+
+
+
+	print("----------------------------------------------")
 
 	#evaluate model
 	#model_results(trainX, trainY, testX, testY,model)

@@ -1,6 +1,7 @@
 Next steps:
 
 MAPE hack : somar um ao pred e ao obs para nao dar inf
+-> deveria identificar os 0 como missing values?
 -> aumentar o numero de epochs : 200 melhora ligeiramente aumentar para 300
 -> comparar performance com e sem smoothing (no test set)
 -> tentar melhorar performance utilizando early stopping

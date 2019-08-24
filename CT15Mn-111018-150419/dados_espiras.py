@@ -37,12 +37,18 @@ def main():
     empty_log = open("empty_log.txt", "w")
     out_file = create_csv()
     files = get_files()
+    number_of_files = 0
+    empty = 0
+    broken = 0
     for filename in files:
         
         if "CT15Mn".lower() not in filename.lower():
             continue
+        number_of_files +=1
+
         if (os.stat(filename).st_size == 0):
             empty_log.write("-------------------Ficheiro:" + filename + "-----------------"+"\n")
+            empty+=1
             continue
         #print(filename)
         f = open(filename,"r+")
@@ -58,6 +64,7 @@ def main():
                 
             except ValueError:
                 broken_log.write("-------------------Ficheiro:" + filename + "-----------------"+ "\n")
+                broken+=1
                 continue
             
             if not re.search("[0-9]*\-[0-9]*\-[0-9]*",data[0]): #if entry doesn't start with the date then it is broken
@@ -66,5 +73,8 @@ def main():
             data= data[:-1] 
             #print(data)
             out_file.writerow(data)
+    print("Percentage of broken", broken*100/number_of_files , "("+ str(broken) + " out of " + str(number_of_files) + ")")
+    print("Percentage of empty", empty*100/number_of_files , "("+ str(empty) + " out of " + str(number_of_files) + ")")
+
                 
 main()

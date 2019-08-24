@@ -266,17 +266,17 @@ def smooth_data(train_cp,filename):
                 if column == 0:
                     previous_t = train_cp[row,-1]
                     next_t = train_cp[row,column+1]
-                    train_cp[row,column] = (previous_t + next_t)/2
+                    train_cp[row,column] = (previous_t + train_cp[row,column] + next_t)/3
                     number_of_changes+=1
                 if column == 95:
                     previous_t = train_cp[row,column-1]
                     next_t = train_cp[row,0]
-                    train_cp[row,column] = (previous_t + next_t)/2
+                    train_cp[row,column] = (previous_t + train_cp[row,column] + next_t)/3
                     number_of_changes+=1
                 else:
                     previous_t = train_cp[row,column-1]
                     next_t = train_cp[row,column+1]
-                    train_cp[row,column] = (previous_t + next_t)/2
+                    train_cp[row,column] = (previous_t + train_cp[row,column] + next_t)/3
                     number_of_changes+=1
                 new_value = train_cp[row][column]
         #print("Number of changes: " + str(number_of_changes))
@@ -481,7 +481,7 @@ def freeway_preprocess(filename,interval=15):
 def main():
 	#print("primeira linha da main")
 	#ID_Espira = input("Coloque id da espira: ")
-	ID_Espira = "14_ct12"
+	ID_Espira = "4_ct4"
 	test_date = np.datetime64('2018-08-27')
 	train_set, test_set = get_data(ID_Espira,0, test_date)
 	
@@ -561,7 +561,7 @@ def main():
 		#trainX, trainY = freeway_dataset(train,3)
 		#testX, testY =freeway_dataset(test,3)
 
-		###################################################################
+	###################################################################
 	run = 0
 	model = ""
 	history = ""

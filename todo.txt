@@ -9,7 +9,7 @@ MAPE hack : somar um ao pred e ao obs para nao dar inf
 -> Experimentar com dados de dias homologos (semana passada e etc)
 -> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
 -> testar com datasets de outros papers - in progress
-
+-> testar o erro com diferentes
 
 Already Done
 -> testar as resdes para 30,45 e 60 minutos feito, só falta registar resultados -> Feito tá no docs
@@ -28,6 +28,7 @@ Already Done
 Questions:
 	-> MAE é menor mas MSE aumenta?????????
 	-> Val loss ligeiramente menor do que a loss
+	-> SQMAPE sklearn
 
 
 
@@ -41,7 +42,6 @@ NN -> 11% mape, maybe have to try different parameters (but theres clearly an im
    ->
 
 
-
 Missing values: 
 	-> imputation using average of the last hour of traffic flow  
 	-> Change it to average of before and after  the missing value
@@ -51,3 +51,6 @@ Coisas interessantes para falar:
 
 Smoothing :
 	Tentei com Z-Score e agora estou a utilizar a média + 2* std dev para detectar outliers e faço a media dos valores adjacentes para imputar
+
+Other useful info:
+merge multiple files and delete duplicate lines:  awk '!seen[$0]++' file1.txt file2.txt file3.txt > out20.txt 

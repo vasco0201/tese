@@ -106,7 +106,7 @@ rmsError = rmse(error)
 
 ```{r}
 
-model_arima =load("arima_model_freeway.rda")
+model_arima =load("arima_model.rda")
 
 
 

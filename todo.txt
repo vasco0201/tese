@@ -1,6 +1,8 @@
 Next steps:
 
-MAPE hack : somar um ao pred e ao obs para nao dar inf
+-> Continuar a fazer o plot para freeways!!!!
+-> Decobri empiricamente através do plot do fluxo do transito da autoestrada que há uma diferença CLARA no que diz respeito aos dias de semana e aos fins de semana
+-> escolher outra espira para analisar 3_ct13 não esta mapeada
 -> deveria identificar os 0 como missing values?
 -> aumentar o numero de epochs : 200 melhora ligeiramente aumentar para 300
 -> comparar performance com e sem smoothing (no test set)

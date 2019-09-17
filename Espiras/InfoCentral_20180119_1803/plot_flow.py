@@ -4,10 +4,21 @@ from os.path import isfile, join
 import re
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 
-f = open("CT15Mn-060417.06", "r")
+dataset = pd.read_csv("/home/vasco/tese/dados_camara_todos.csv")#dados mais recentes
+espira_ID = input("Select the desired sensor (ZONE_ctID) :")
+
+dataset['unique_id'] = dataset.Zona.astype(str) + '_' + dataset.ID_Espira.astype(str)
+dataset['unique_id'] = dataset['unique_id'].str.lower()
+dataset = dataset[dataset["unique_id"] == str(ID_Espira)]
+
+date = input("Input the desired date (yyyy-mm-dd):")
+dataset =  dataset[dataset["Date"] == str(date)]
+print(dataset.head())
+sys.exit()
 
 flow_data = []
 lines = f.readlines()

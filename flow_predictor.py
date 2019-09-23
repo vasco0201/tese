@@ -13,6 +13,8 @@ from keras import optimizers
 from keras import regularizers
 import math
 from sklearn import preprocessing
+from matplotlib import rcParams
+rcParams.update({'figure.autolayout': True})
 
 
 
@@ -332,9 +334,9 @@ def get_nn_data(filename):
 	x, y = create_dataset(dataset)
 	return	x, y
 
-def nn_model(trainX,trainY,params):
+def nn_model(trainX,trainY,params,dim_input):
 	model = Sequential()
-	layer1 = Dense(64,input_dim=3, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
+	layer1 = Dense(64,input_dim=dim_input, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
 	layer2 = Dense(64, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
 	layer3 = Dense(32, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
 	#layer3 = Dense(400, activation='relu')
@@ -349,7 +351,7 @@ def nn_model(trainX,trainY,params):
 	
 	#compiling the model
 	model.compile(loss='mean_squared_error', optimizer=adam,metrics=['mse','mae','mape'])
-	history= model.fit(trainX, trainY, epochs=200, verbose=2, batch_size=64,validation_split=0.2)
+	history= model.fit(trainX, trainY, epochs=200, verbose=0, batch_size=64,validation_split=0.2)
 	
 	return model,history
 
@@ -475,126 +477,162 @@ def freeway_preprocess(filename,interval=15):
 
 
 	return train,test
+#function that plots the variation of mape with the
+#increase in the number of past timeteps considered in the network
+def plot_mape(train_mape_lst,test_mape_lst):
+	x = range(1,len(train_mape_lst)+1)
+	fig, ax = plt.subplots()
+	ax.plot(x,train_mape_lst,label="Train",color="red",linewidth=2.0)
+	ax.plot(x,test_mape_lst,label="Test",color="blue",linewidth=2.0)
+	ax.legend(loc='best')
+	ax.set_xticks(x)
+	#ax[0].set_xlabel('Time of day', fontsize=14)
+	ax.set_title("Variation of mape with time window increase",fontsize=14)
+	ax.set_ylabel('Mape',fontsize=14)
+	ax.set_xlabel('Time window size', fontsize=14)
+	ax.grid(True)
+	fig.savefig("/home/vasco/Desktop/freeway_plots/"+"mape_timewindow.png",dpi=100)
+	#plt.subplots_adjust(top=0.935,bottom=0.145,left=0.065,right=0.989,hspace=0.2,wspace=0.2)
+	#plt.tight_layout()
+	#plt.subplots_adjust(bottom=0.19)
+	plt.show()
+
+	plt.close()
+
 
 
 
 def main():
 	#print("primeira linha da main")
 	#ID_Espira = input("Coloque id da espira: ")
-	ID_Espira = "4_ct4"
-	test_date = np.datetime64('2018-08-27')
-	train_set, test_set = get_data(ID_Espira,0, test_date)
+	# ID_Espira = "4_ct4"
+	# test_date = np.datetime64('2018-08-27')
+	# train_set, test_set = get_data(ID_Espira,0, test_date)
 	
-	#dt2, train_set, test_set, dataset = get_data(ID_Espira)
-	train_cp = copy.deepcopy(train_set)
-	test_cp = copy.deepcopy(test_set)
+	# #dt2, train_set, test_set, dataset = get_data(ID_Espira)
+	# train_cp = copy.deepcopy(train_set)
+	# test_cp = copy.deepcopy(test_set)
 	
-	#smoothing both sets
-	smooth_train, df_train= smooth_data(train_cp, "train_2") 
-	smooth_test, df_test = smooth_data(test_cp, "test_2")
+	# #smoothing both sets
+	# smooth_train, df_train= smooth_data(train_cp, "train_2") 
+	# smooth_test, df_test = smooth_data(test_cp, "test_2")
 
-	interval = input("Escolha o horizonte de predicao (15,30,45 ou 60): ")
-	if not interval:
-		interval = 15
-	#for interval in [15,30,45,60]:
+	# interval = input("Escolha o horizonte de predicao (15,30,45 ou 60): ")
+	# if not interval:
+	# 	interval = 15
+	# #for interval in [15,30,45,60]:
 
-	cenas = aggregate_data(smooth_train,"train", interval)
-	cenas = aggregate_data(smooth_test,"test",interval)
-	transform_data("train_"+str(interval)+".csv","train_formatted.csv")
-	transform_data("test_"+str(interval)+".csv","test_formatted.csv")
+	# cenas = aggregate_data(smooth_train,"train", interval)
+	# cenas = aggregate_data(smooth_test,"test",interval)
+	# transform_data("train_"+str(interval)+".csv","train_formatted.csv")
+	# transform_data("test_"+str(interval)+".csv","test_formatted.csv")
 
-		#smoothing with z score
-		#NOT IN USE
-		#zscore_train = smooth_zscore(train_cp)
+	# 	#smoothing with z score
+	# 	#NOT IN USE
+	# 	#zscore_train = smooth_zscore(train_cp)
 
-		#Original datasets before smoothing
+	# 	#Original datasets before smoothing
 
-	dataframe = pd.read_csv('train.csv')
-	dataset = dataframe.drop(columns=["Data"])
-	dataset = dataset.values
-	train = dataset.astype('float32')
+	# dataframe = pd.read_csv('train.csv')
+	# dataset = dataframe.drop(columns=["Data"])
+	# dataset = dataset.values
+	# train = dataset.astype('float32')
 
-	dataframe = pd.read_csv('test.csv')
-	dataset = dataframe.drop(columns=["Data"])
-	dataset = dataset.values
-	test = dataset.astype('float32')
+	# dataframe = pd.read_csv('test.csv')
+	# dataset = dataframe.drop(columns=["Data"])
+	# dataset = dataset.values
+	# test = dataset.astype('float32')
 	
-	# plot differences between original and smoothed data
-	plot_changes(train, df_train)
-	#plot_changes(test, df_test)
+	# # plot differences between original and smoothed data
+	# plot_changes(train, df_train)
+	# #plot_changes(test, df_test)
 	
-	#prepares the data for the nn 
-	#transform_data("test_2.csv", "3day_unsmoothed.csv",3) 
+	# #prepares the data for the nn 
+	# #transform_data("test_2.csv", "3day_unsmoothed.csv",3) 
 
-	#transform_data("test_2.csv", "test_formatted.csv")
-	#transform_data("train_2.csv", "train_formatted.csv")
+	# #transform_data("test_2.csv", "test_formatted.csv")
+	# #transform_data("train_2.csv", "train_formatted.csv")
 	
-	transform_data("test_set.csv", "test_set2.csv") #specific day testing data 
+	# transform_data("test_set.csv", "test_set2.csv") #specific day testing data 
 
 	
 
-	#transform_data("train_30min.csv","train_formatted.csv")
-	#transform_data("test_30min.csv","test_formatted.csv")
+	# #transform_data("train_30min.csv","train_formatted.csv")
+	# #transform_data("test_30min.csv","test_formatted.csv")
 	
-	# creates and trains the model
-	trainX, trainY = get_nn_data('train_formatted.csv')
-	testX, testY = get_nn_data('test_formatted.csv')
+	# # creates and trains the model
+	# trainX, trainY = get_nn_data('train_formatted.csv')
+	# testX, testY = get_nn_data('test_formatted.csv')
 
 	################################################################
 	#freeway dataset
-	# dataframe = pd.read_csv("freeway_data/freeway_data2.csv", usecols=[1], engine='python')
-	# dataset = dataframe.values
-	# dataset = dataset.astype('float32')
+	dataframe = pd.read_csv("freeway_data/freeway_data2.csv", usecols=[1], engine='python')
+	dataset = dataframe.values
+	dataset = dataset.astype('float32')
 
-	# train_size = int(len(dataset) * 0.80)
-	# test_size = len(dataset) - train_size
-	# train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
-	# print(len(train), len(test))
+	train_size = int(len(dataset) * 0.80)
+	test_size = len(dataset) - train_size
+	train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
+	print(len(train), len(test))
 
 
-	#for interval in [15,30,45,60]:
+	for interval in [15]:#,30,45,60]:
 
-		#train, test = freeway_preprocess("freeway_data/freeway_data2.csv",interval)
-		#print("Freeway data length")
-		#print(len(train), len(test))
+		train, test = freeway_preprocess("freeway_data/freeway_data2.csv",interval)
+		print("Freeway data length")
+		print(len(train), len(test))
 
-		#trainX, trainY = freeway_dataset(train,3)
-		#testX, testY =freeway_dataset(test,3)
+		trainX, trainY = freeway_dataset(train,3)
+		testX, testY =freeway_dataset(test,3)
 
 	###################################################################
-	run = 0
+	run = 1
 	model = ""
 	history = ""
 	train_runs = [[],[],[],[]]#alterar para 3
 	test_runs = [[],[],[],[]]
-	while run < 2:
-		model, history= nn_model(trainX,trainY,"cenas") #Eventualmente dar a opcao de escolher os hiperparametros
+	train_mape_ts = []
+	test_mape_ts = []
+	while run <= 6:
+		print("Nr of past ts: ", run)
+		trainX, trainY = freeway_dataset(train,run)
+		testX, testY =freeway_dataset(test,run)
+		model, history= nn_model(trainX,trainY,"cenas",run) #Eventualmente dar a opcao de escolher os hiperparametros
 		mape, mae, mse,rmape= evaluate_model(trainX, model, 1,trainY)
 		train_runs[0].append(mape)
 		train_runs[1].append(mae)
 		train_runs[2].append(mse)
 		train_runs[3].append(rmape)
+		train_mape_ts.append(mape)
 		#mape, mae, mse = evaluate_model('train_formatted.csv',model)
 		#train_runs[0].append(mape)
 		#train_runs[1].append(mae)
 		#train_runs[2].append(mse)
+		print("Train mape: ", mape)
+		print("Real train: ", rmape)
+
 		
 		mape, mae, mse,rmape = evaluate_model(testX, model, 1,testY)
 		test_runs[0].append(mape)
 		test_runs[1].append(mae)
 		test_runs[2].append(mse)
 		test_runs[3].append(rmape)
+		test_mape_ts.append(mape)
+
+		print("Test mape: ", mape)
+		print("Real test: ", rmape)
+
 
 		#mape, mae, mse = evaluate_model('test_formatted.csv',model)
 		#test_runs[0].append(mape)
 		#test_runs[1].append(mae)
 		#test_runs[2].append(mse)
-		break
 		run +=1
 	plot_loss(history,interval)
-	print("----------------------------------------------")
-	print("Data Aggregation interval: ",interval)
-	print("Average of 3 runs:  ")
+	plot_mape(train_mape_ts,test_mape_ts)
+	# print("----------------------------------------------")
+	# print("Data Aggregation interval: ",interval)
+	# print("Average of 3 runs:  ")
 	
 	# print("Train")
 	# print("MAPE: ", sum(train_runs[0])/len(train_runs[0]))
@@ -607,21 +645,21 @@ def main():
 	# print("MSE: ",sum(test_runs[2])/len(test_runs[2]))
 
 
-	print("Train")
-	print("MAPE: ", sum(train_runs[0])/len(train_runs[0]))
-	print("REAL MAPE: ", sum(train_runs[3])/len(train_runs[3]))
-	print("MAE: ",sum(train_runs[1])/len(train_runs[1]))
-	print("MSE: ",sum(train_runs[2])/len(train_runs[2]))
+	# print("Train")
+	# print("MAPE: ", sum(train_runs[0])/len(train_runs[0]))
+	# print("REAL MAPE: ", sum(train_runs[3])/len(train_runs[3]))
+	# print("MAE: ",sum(train_runs[1])/len(train_runs[1]))
+	# print("MSE: ",sum(train_runs[2])/len(train_runs[2]))
 
-	print("Test")
-	print("MAPE: ", sum(test_runs[0])/len(test_runs[0]))
-	print("REAL MAPE: ", sum(test_runs[3])/len(test_runs[3]))
-	print("MAE: ",sum(test_runs[1])/len(test_runs[1]))
-	print("MSE: ",sum(test_runs[2])/len(test_runs[2]))
+	# print("Test")
+	# print("MAPE: ", sum(test_runs[0])/len(test_runs[0]))
+	# print("REAL MAPE: ", sum(test_runs[3])/len(test_runs[3]))
+	# print("MAE: ",sum(test_runs[1])/len(test_runs[1]))
+	# print("MSE: ",sum(test_runs[2])/len(test_runs[2]))
 
 
 
-	print("----------------------------------------------")
+	# print("----------------------------------------------")
 
 	#evaluate model
 	#model_results(trainX, trainY, testX, testY,model)

@@ -13,6 +13,7 @@ library('forecast')
 library('tseries')
 library('chron')
 library('sas7bdat')
+library('lubridate')
 ```
 
 
@@ -44,21 +45,32 @@ dtimes = data$Date
 head(data)
 #data$Date2 = as.Date(data$Date) 
 #head(data)
-dtparts = t(as.data.frame(strsplit(dtimes," ")))
-row.names(dtparts) = NULL
-thetimes = chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
+#dtparts = t(as.data.frame(strsplit(dtimes," ")))
+#row.names(dtparts) = NULL
+#thetimes = chron(dates=dtparts[,1],times=dtparts[,2],format=c('y-m-d','h:m:s'))
+#thetimes = chron(dates=dtparts[,1],format=c('y-m-d'))
+
+data$Time <-format(as.POSIXct(data$Date) ,format = "%H:%M:%S")
+data$Date <- as.Date(data$Date)
+
+df <- data.frame(Date = data$Date,
+                 Time = data$Time,
+                 x = data$Count)
+
 train <- subset(data, Date < "2002-03-01" )
 test <- subset(data, Date >= "2002-03-01" )
-myts_train <- ts(train$Count, start=1, end=2976, frequency=96)
-                 
-myts_test <- ts(test$Count, start=1, end=8832, frequency=96)
+#diff = as.numeric(as.Date("2002-08-01")-as.Date("2002-01-01"))
+myts_train <- ts(train$Count, start = decimal_date(as.Date("2002-01-01")),frequency = 96)
+myts_test <- ts(test$Count, start = decimal_date(as.Date("2002-03-01")), frequency = 96)
+
+#myts_test <- ts(test$Count, start=1, end=8832, frequency=96)
 
 ```
 
 
 ```{r}
 model = auto.arima(myts_train, seasonal = TRUE)
-pred = predict(model,n.ahead = 672)
+pred = predict(model,n.ahead = 96)
 save(model, file = "arima_model_freeway.rda")
 
 ```
@@ -101,7 +113,12 @@ error <- pred_values-obs
 mapeError = mape(error,obs)
 maeError = mae(error)
 rmsError = rmse(error)
+pred_values
 
+#mapes = setNames(data.frame(matrix(ncol = 2, nrow = 0)), c("size_of_train(days)","mape"))
+load("/home/vasco/mape_table.RData")
+mapes[nrow(mapes) + 1,] = list(nrow(train), mapeError)
+save(mapes,file="/home/vasco/mape_table.RData")
 ```
 
 ```{r}
@@ -113,5 +130,27 @@ model_arima =load("arima_model.rda")
 orderNS<-c(model$arma[1], model$arma[6] , model$arma[2])
 seasonalOrder <- c(model$arma[3], model$arma[7] , model$arma[4])
 new_model = Arima(myts_train,order=orderNS,seasonal = list(order = seasonalOrder,period=96))
+```
+
+```{r}
+dfe = setNames(data.frame(matrix(ncol = 2, nrow = 0)), c("Model Params","Mape"))
+
+fit <- Arima(myts_train, order=c(4,1,1), seasonal = list(order = c(0, 1, 1), period = 96))
+preds = predict(fit,n.ahead = 96)
+pred_values = preds$pred
+pred_values = as.numeric(pred_values)
+error <- pred_values-obs
+mapeError = mape(error,obs)
+dfe[nrow(dfe) + 1,] = list("(4,1,1)(0,1,1)[96]",mapeError)
+save(dfe,file="/home/vasco/mape_param.RData")
+x = dfe[6,]
+
+```
+
+```{r}
+preds = predict(fit,n.ahead = 96)
+pred_values = preds$pred
+pred_values = as.numeric(pred_values)
+pred_values
 ```
 

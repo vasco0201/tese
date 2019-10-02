@@ -1,18 +1,18 @@
 Next steps:
 
+-> Registar o erro para cada horizonte de predição para os dados das auto estradas
+-> Tenho de ver como é que a loss evolui para cada horizonte de predição 
+-> Falta ver a evolução da loss para os dados das espiras
 -> Continuar a fazer o plot para freeways!!!!
+-> Ter um script para transformar os dados de uma espira em dados prontos para o arima *IMOPRTANTE*
+-> tentar reproduzir os resultados do paper que diz que oarima não precisa de mtos dados e ir aumentando o conj de treino para ver se os resultados alteram
+al
+-> Falta continuar o plot da loss/epochs
 -> Decobri empiricamente através do plot do fluxo do transito da autoestrada que há uma diferença CLARA no que diz respeito aos dias de semana e aos fins de semana
--> escolher outra espira para analisar 3_ct13 não esta mapeada
 -> deveria identificar os 0 como missing values?
--> aumentar o numero de epochs : 200 melhora ligeiramente aumentar para 300
--> comparar performance com e sem smoothing (no test set)
 -> tentar melhorar performance utilizando early stopping
--> aumentar ligeiramente o lr
--> Comparar com arima - running ~~ Similar mas o arima é mais chato de retreinar 
 -> Experimentar com dados de dias homologos (semana passada e etc)
 -> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
--> testar com datasets de outros papers - in progress
--> testar o erro com diferentes
 
 Already Done
 -> testar as resdes para 30,45 e 60 minutos feito, só falta registar resultados -> Feito tá no docs

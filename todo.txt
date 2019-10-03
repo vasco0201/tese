@@ -1,3 +1,7 @@
+Dúvidas:
+-> Devia testar tudo nas mesmas condicoes (o tamanho do test set devia ser o mesmo)? Não? Perguntar ao professor como é que faço isto, porque nas redes eu mando depois um conjunto de valores de tamanho indefinido para ele predizer e no arima é diferente, dizemos o numero de steps que queremos predizer e ele faz
+-> no arima não dá para ir fazendo "refit" e o arima não é tão bom a generalizar e also, as redes neuronais utilizam sempre 3 inputs passados de dados reais para fazer a predição enquanto que aqui ele consegue prever logo para o dia todo
+-> arima é menos scalable?
 Next steps:
 
 -> Registar o erro para cada horizonte de predição para os dados das auto estradas
@@ -8,13 +12,12 @@ Next steps:
 -> tentar reproduzir os resultados do paper que diz que oarima não precisa de mtos dados e ir aumentando o conj de treino para ver se os resultados alteram
 al
 -> Falta continuar o plot da loss/epochs
--> Decobri empiricamente através do plot do fluxo do transito da autoestrada que há uma diferença CLARA no que diz respeito aos dias de semana e aos fins de semana
 -> deveria identificar os 0 como missing values?
--> tentar melhorar performance utilizando early stopping
 -> Experimentar com dados de dias homologos (semana passada e etc)
--> criar uma lista dos ficheiros gerados para poder fazer um make_clean porque já tenho 300000 ficheiros
+-> LSTM estudar melhor funcionamento e aumentar o time lag para tomar partido das capaciades long term 
 
 Already Done
+-> Decobri empiricamente através do plot do fluxo do transito da autoestrada que há uma diferença CLARA no que diz respeito aos dias de semana e aos fins de semana
 -> testar as resdes para 30,45 e 60 minutos feito, só falta registar resultados -> Feito tá no docs
 -> Atualmente o modelo está overfitted porque val loss >> loss -> solved with weight regularization and less epochs
 -> ver a média dos pesos para ver se há algum que seja absurdo ->

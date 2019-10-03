@@ -1,0 +1,217 @@
+['ws2004_15min_es_738d_ms_stn.sas7bdat', 'mn2000_15min_60.sas7bdat', 'uk2002_15min_4680b.sas7bdat', 'mn2000_15min_890.sas7bdat', 'uk1996_15min_4762b.sas7bdat', 'mn2004_15min_578.sas7bdat', 'uk1996_15min_4822a.sas7bdat', 'freeway_data.py', 'md2004_15min_7a.sas7bdat', 'mn2000_15min_578.sas7bdat', 'uk1996_15min_4826a.sas7bdat', 'ws2004_15min_es_738d_mn_stn.sas7bdat', 'mn2004_15min_737.sas7bdat', 'md2004_15min_4b.sas7bdat', 'uk1996_15min_4868b.sas7bdat', 'uk1996_15min_4762a.sas7bdat', 'uk2002_15min_6951a.sas7bdat', 'ws2004_15min_es_130d_mn_stn.sas7bdat', 'mn2000_15min_882.sas7bdat', 'uk2002_15min_2808b.sas7bdat', 'uk1996_15min_4868a.sas7bdat', 'uk2002_15min_4565a.sas7bdat', 'uk2002_15min_4897a.sas7bdat', 'miss_values_freeway.txt', 'mn2004_15min_882.sas7bdat', 'mn2004_15min_442.sas7bdat', 'md2004_15min_9a.sas7bdat', 'mn2004_15min_890.sas7bdat', 'mn2000_15min_442.sas7bdat', 'ws2004_15min_es_130d_ms_stn.sas7bdat', 'mn2000_15min_737.sas7bdat', 'mn2004_15min_60.sas7bdat', 'md2004_15min_2a.sas7bdat', 'md2004_15min_9b.sas7bdat', 'md2004_15min_7b.sas7bdat', 'ws2004_15min_es_179d_ms_stn.sas7bdat', 'uk2002_15min_2737a.sas7bdat', 'ws2004_15min_es_179d_mn_stn.sas7bdat']
+---------------------------------------------------------
+file:  ws2004_15min_es_738d_ms_stn.sas7bdat
+iteration: 0
+Missing values:  380
+Percentage of missing values : 2.183155233827416 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2000_15min_60.sas7bdat
+iteration: 1
+Missing values:  878
+Percentage of missing values : 2.4988615664845173 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk2002_15min_4680b.sas7bdat
+iteration: 2
+Missing values:  1625
+Percentage of missing values : 4.637557077625571 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2000_15min_890.sas7bdat
+iteration: 3
+Missing values:  1735
+Percentage of missing values : 4.937955373406193 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk1996_15min_4762b.sas7bdat
+iteration: 4
+Missing values:  300
+Percentage of missing values : 3.4340659340659343 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2004_15min_578.sas7bdat
+iteration: 5
+Missing values:  31
+Percentage of missing values : 0.08822859744990894 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk1996_15min_4822a.sas7bdat
+iteration: 6
+Missing values:  552
+Percentage of missing values : 6.318681318681318 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  md2004_15min_7a.sas7bdat
+iteration: 8
+Missing values:  503
+Percentage of missing values : 4.158399470899471 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2000_15min_578.sas7bdat
+iteration: 9
+Missing values:  945
+Percentage of missing values : 2.6895491803278686 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk1996_15min_4826a.sas7bdat
+iteration: 10
+Missing values:  483
+Percentage of missing values : 5.528846153846153 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  ws2004_15min_es_738d_mn_stn.sas7bdat
+iteration: 11
+Missing values:  381
+Percentage of missing values : 2.1889003791795933 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2004_15min_737.sas7bdat
+iteration: 12
+Missing values:  46
+Percentage of missing values : 0.13091985428051003 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  md2004_15min_4b.sas7bdat
+iteration: 13
+Missing values:  927
+Percentage of missing values : 5.747767857142857 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk1996_15min_4868b.sas7bdat
+iteration: 14
+Missing values:  367
+Percentage of missing values : 4.201007326007327 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk1996_15min_4762a.sas7bdat
+iteration: 15
+Missing values:  300
+Percentage of missing values : 3.4340659340659343 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk2002_15min_6951a.sas7bdat
+iteration: 16
+Missing values:  622
+Percentage of missing values : 1.7751141552511416 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  ws2004_15min_es_130d_mn_stn.sas7bdat
+iteration: 17
+Missing values:  168
+Percentage of missing values : 0.959123087462891 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2000_15min_882.sas7bdat
+iteration: 18
+Missing values:  1899
+Percentage of missing values : 5.404713114754099 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk2002_15min_2808b.sas7bdat
+iteration: 19
+Missing values:  1349
+Percentage of missing values : 4.364001035196687 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk1996_15min_4868a.sas7bdat
+iteration: 20
+Missing values:  354
+Percentage of missing values : 4.052197802197802 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk2002_15min_4565a.sas7bdat
+iteration: 21
+Missing values:  1927
+Percentage of missing values : 5.499429223744292 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk2002_15min_4897a.sas7bdat
+iteration: 22
+Missing values:  2422
+Percentage of missing values : 7.835144927536232 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2004_15min_882.sas7bdat
+iteration: 24
+Missing values:  375
+Percentage of missing values : 1.0672814207650272 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2004_15min_442.sas7bdat
+iteration: 25
+Missing values:  298
+Percentage of missing values : 0.8481329690346083 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  md2004_15min_9a.sas7bdat
+iteration: 26
+Missing values:  717
+Percentage of missing values : 5.927579365079365 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2004_15min_890.sas7bdat
+iteration: 27
+Missing values:  371
+Percentage of missing values : 1.0558970856102003 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2000_15min_442.sas7bdat
+iteration: 28
+Missing values:  633
+Percentage of missing values : 1.801571038251366 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  ws2004_15min_es_130d_ms_stn.sas7bdat
+iteration: 29
+Missing values:  383
+Percentage of missing values : 2.18657227677552 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2000_15min_737.sas7bdat
+iteration: 30
+Missing values:  1124
+Percentage of missing values : 3.198998178506375 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  mn2004_15min_60.sas7bdat
+iteration: 31
+Missing values:  249
+Percentage of missing values : 0.7086748633879781 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  md2004_15min_2a.sas7bdat
+iteration: 32
+Missing values:  622
+Percentage of missing values : 5.142195767195767 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  md2004_15min_9b.sas7bdat
+iteration: 33
+Missing values:  707
+Percentage of missing values : 5.847324456207096 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  md2004_15min_7b.sas7bdat
+iteration: 34
+Missing values:  503
+Percentage of missing values : 4.158399470899471 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  ws2004_15min_es_179d_ms_stn.sas7bdat
+iteration: 35
+Missing values:  335
+Percentage of missing values : 1.9366400739969938 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  uk2002_15min_2737a.sas7bdat
+iteration: 36
+Missing values:  1454
+Percentage of missing values : 4.703674948240166 %
+---------------------------------------------------------
+---------------------------------------------------------
+file:  ws2004_15min_es_179d_mn_stn.sas7bdat
+iteration: 37
+Missing values:  318
+Percentage of missing values : 1.8383628165105792 %
+---------------------------------------------------------

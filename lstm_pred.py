@@ -141,21 +141,24 @@ def get_nn_data(filename):
 	dataset = dataset.astype('float32')
 	x, y = create_dataset(dataset)
 	return	x, y
-def lstm_model(trainX,trainY,n_features,n_steps):
+
+def lstm_model(trainX,trainY,n_features,n_steps,n_epochs):
 	trainX = trainX.reshape((trainX.shape[0], trainX.shape[1], n_features))
 	adam=optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
 	model = Sequential()
-	model.add(LSTM(50, activation='relu', input_shape=(n_steps, n_features), kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
+	model.add(LSTM(64, activation='relu', input_shape=(n_steps, n_features), kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
 	model.add(Dense(1))
 	model.compile(optimizer=adam, loss='mse',metrics=['mse','mae'])
 	# fit model
-	history = model.fit(trainX, trainY, epochs=10, verbose=1,validation_split=0.20)
+	history = model.fit(trainX, trainY, epochs=n_epochs, verbose=2,validation_split=0.20)
 	return model,history
+
 def model_results(trainX, trainY, testX, testY,model):
 	# Estimate model performance
 	trainScore = model.evaluate(trainX, trainY, verbose=0)
 	testScore = model.evaluate(testX, testY, verbose=0)
 	return trainScore, testScore
+
 def evaluate_instance(filename, model,n_features):
 	obs_df = pd.read_csv(filename)
 	obs = obs_df.values
@@ -178,14 +181,23 @@ def evaluate_model(filename, model,n_features,flag=0, obsY="data"):
 		print("MAPE: ",mape)
 		score = model.evaluate(obsX, obsY, verbose=0)
 		print("MAE:" ,score[2] ,"MSE: ", score[1])
+		mmape = mean_absolute_percentage_error(obsY,pred)
+		print("MMAPE:", mmape)
 		#plot_results(pred, obsY, "teste",1)
 	else:
 		filename = filename.reshape((filename.shape[0], filename.shape[1], n_features))
 		pred = model.predict(filename)
 		mape = calc_mape(pred,obsY)
+		mmape = mean_absolute_percentage_error(obsY,pred)
+		print("MMAPE:", mmape)
 		print("MAPE: ",mape)
 		score = model.evaluate(filename, obsY, verbose=0)
 		print("MAE:" ,score[2] ,"MSE: ", score[1])	
+
+
+def mean_absolute_percentage_error(y_true, y_pred): 
+	y_true, y_pred = np.array(y_true), np.array(y_pred)
+	return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 	
 def calc_mape(pred,obsY):
 	mape = []
@@ -240,17 +252,26 @@ def main():
 	print(len(train), len(test))
 
 
-	f_trainX, f_trainY = freeway_dataset(train,3)
-	f_testX, f_testY =freeway_dataset(test,3)
+	f_trainX, f_trainY = freeway_dataset(train,6)
+	f_testX, f_testY =freeway_dataset(test,6)
 	
 	################# LSTM Network ##################################
 	n_features = 1
-	n_steps = 3
-	model, history = lstm_model(f_trainX,f_trainY,n_features,n_steps)
+	n_steps = 6
+	epochs = 50
+	model, history = lstm_model(f_trainX,f_trainY,n_features,n_steps,epochs)
 	#evaluate_model("lstm/train_formatted.csv", model,n_features)
 	#evaluate_model("lstm/test_formatted.csv", model,n_features)
 	evaluate_model(f_trainX,model,n_features,1,f_trainY)
 	evaluate_model(f_testX,model,n_features,1,f_testY)
+	# number_zeros = 0
+	# for i in f_testY:
+	# 	if i==0:
+	# 		number_zeros+=1
+	# print(number_zeros)
+	# print(len(f_testY))
+
+
 
 main()
 

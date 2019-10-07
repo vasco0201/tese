@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from scipy import stats
 import statistics
+from keras.callbacks import EarlyStopping
 from keras.models import Sequential
 from keras.layers import Dense
 from keras import optimizers
@@ -361,6 +362,8 @@ def nn_model(trainX,trainY,params,dim_input,n_epochs=200):
 	
 	#compiling the model
 	model.compile(loss='mean_squared_error', optimizer=adam,metrics=['mse','mae','mape'])
+	patience= int(round(n_epochs/3))
+	es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=patience)
 	history= model.fit(trainX, trainY, epochs=n_epochs, verbose=2, batch_size=64,validation_split=0.2)
 	
 	return model,history
@@ -634,17 +637,21 @@ def main():
 
 	###############################################################
 	# freeway dataset
-	dataframe = pd.read_csv("freeway_data/freeway_data2.csv", usecols=[1], engine='python')
-	dataset = dataframe.values
-	dataset = dataset.astype('float32')
+	# dataframe = pd.read_csv("freeway_data/freeway_data2.csv", usecols=[1], engine='python')
+	# dataset = dataframe.values
+	# dataset = dataset.astype('float32')
 
-	train_size = int(len(dataset) * 0.80)
-	test_size = len(dataset) - train_size
-	train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
-	print(len(train), len(test))
-
-
-	for interval in [15]:#,30,45,60]:
+	# train_size = int(len(dataset) * 0.80)
+	# test_size = len(dataset) - train_size
+	# train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
+	# print(len(train), len(test))
+	
+	with open("train_mape_lst.txt", "rb") as fp:   # Unpickling
+		train_mape_evo = pickle.load(fp)
+	with open("test_mape_lst.txt", "rb") as fp:   # Unpickling
+		test_mape_evo = pickle.load(fp)
+	i = 0
+	for interval in [15,30,45,60]:
 
 		train, test = freeway_preprocess("freeway_data/freeway_data2.csv",interval)
 		print("Freeway data length")
@@ -653,11 +660,24 @@ def main():
 		trainX, trainY = freeway_dataset(train,3)
 		testX, testY =freeway_dataset(test,3)
 		
-		model, history= nn_model(trainX,trainY,"cenas",3,1000)
-		plot_loss(history,15)
+		model, history= nn_model(trainX,trainY,"cenas",3,600)
+		
+		mape, mae, mse,rmape = evaluate_model(trainX, model, 1,trainY)
+		train_mape_evo[i].append(mape)
+		mape, mae, mse,rmape = evaluate_model(testX, model, 1,testY)
+		test_mape_evo[i].append(mape)
+		gc.collect()
+		i+=1
+	print(train_mape_evo)
+	with open("train_mape_lst.txt", "wb") as fp:
+ 		pickle.dump(train_mape_evo, fp)
+	with open("test_mape_lst.txt", "wb") as fp:
+		pickle.dump(test_mape_evo, fp)
+	print(i)
 
-		with open("loss_evolution_lst.txt", "wb") as fp:
-			pickle.dump(history.history['loss'], fp)
+
+
+
 
 
 
@@ -761,10 +781,6 @@ def main():
 	#evaluate model
 	#model_results(trainX, trainY, testX, testY,model)
 
-	#plot the results for the first three days
-	#FIXME HAVE TO CREATE SLIDING WINDOW FOR THIS NEW DATASET
-	#evaluate_model('train_formatted.csv',model)
-	#evaluate_model('test_formatted.csv',model)
 		
 	
 	#plot_results (predicted, observed, output file name, flag to choose how many days to plot)

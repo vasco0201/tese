@@ -11,8 +11,13 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
 from keras import optimizers
+from keras.callbacks import EarlyStopping
 from keras import regularizers
 import math
+import csv
+from os import listdir
+from os.path import isfile, join
+import os.path
 
 curr_dir = os.getcwd()
 
@@ -24,6 +29,7 @@ def create_dataset(data):
     return np.array(X), np.array(Y)
 
 def get_data(ID_Espira):
+	ID_Espira = "4_ct4"
 	data_folder = os.path.join(curr_dir,"dados_camara_todos.csv")
 	dataset = pd.read_csv(data_folder)
 	#dataset = pd.read_csv("\\Users\\ASUS\\Documents\\IST\\5ºAno\\CT15Mn-150818_101018\\dados_camara.csv")#dados mais recentes
@@ -40,18 +46,30 @@ def get_data(ID_Espira):
 
 	dataset_uid = dataset_uid.groupby('Data').apply(lambda x: x.reset_index())
 
-	msk = np.random.rand(len(dataset_uid)) < 0.8
-	train_df = dataset_uid[msk]
-	test_df = dataset_uid[~msk]
+	# msk = np.random.rand(len(dataset_uid)) < 0.8
+	# train_df = dataset_uid[msk]
+	# test_df = dataset_uid[~msk]
+	dataset_2 = dataset_uid.values
+	train_size = int(len(dataset_2) * 0.80)
+	test_size = len(dataset_2) - train_size
+	train, test = dataset_2[0:train_size,:], dataset_2[train_size:len(dataset_2),:]
+	
+	#np.delete(train_df, np.s_[0], axis=1)
+	#np.delete(test_df,np.s_[0], axis=1)
+	
+	train_df = pd.DataFrame(train)
+	test_df = pd.DataFrame(test)
 
+	train_df = train_df.drop(columns=[0])
+	test_df = test_df.drop(columns=[0])
 	dt2.to_csv("lstm/limited_data.csv", sep= ',', index=False)
 	#train_set
-	train_df = train_df.drop(columns=["index"])
+	#train_df = train_df.drop(columns=["index"])
 
 	train_df.to_csv("lstm/train.csv", sep= ',', index=False)
 
 	#test_set
-	test_df = test_df.drop(columns=["index"])
+	#test_df = test_df.drop(columns=["index"])
 	test_df.to_csv("lstm/test.csv", sep= ',', index=False)
 
 	#full set
@@ -63,7 +81,7 @@ def get_data(ID_Espira):
 def smooth_data(train_cp,filename):
     data = train_cp.iloc[:,0]
     print(len(data.values))
-    train_cp = train_cp.drop(columns=["Data"])
+    train_cp = train_cp.drop(columns=[1])
     train_cp = train_cp.values
 
     #train_cp = train_cp.astype('float32')
@@ -147,9 +165,15 @@ def lstm_model(trainX,trainY,n_features,n_steps,n_epochs):
 	adam=optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
 	model = Sequential()
 	model.add(LSTM(64, activation='relu', input_shape=(n_steps, n_features), kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
+	#model.add(LSTM(32, activation='relu', kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
+	#return_sequences=True
+
 	model.add(Dense(1))
-	model.compile(optimizer=adam, loss='mse',metrics=['mse','mae'])
+	model.compile(optimizer=adam, loss='mse',metrics=['mse','mae','mape'])
 	# fit model
+	patience= int(round(n_epochs/3))
+	es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=patience)
+
 	history = model.fit(trainX, trainY, epochs=n_epochs, verbose=2,validation_split=0.20)
 	return model,history
 
@@ -181,23 +205,22 @@ def evaluate_model(filename, model,n_features,flag=0, obsY="data"):
 		print("MAPE: ",mape)
 		score = model.evaluate(obsX, obsY, verbose=0)
 		print("MAE:" ,score[2] ,"MSE: ", score[1])
-		mmape = mean_absolute_percentage_error(obsY,pred)
-		print("MMAPE:", mmape)
+		return score[2],score[1],score[3],mape
+		
 		#plot_results(pred, obsY, "teste",1)
 	else:
 		filename = filename.reshape((filename.shape[0], filename.shape[1], n_features))
 		pred = model.predict(filename)
 		mape = calc_mape(pred,obsY)
-		mmape = mean_absolute_percentage_error(obsY,pred)
-		print("MMAPE:", mmape)
 		print("MAPE: ",mape)
 		score = model.evaluate(filename, obsY, verbose=0)
-		print("MAE:" ,score[2] ,"MSE: ", score[1])	
+		print("MAE:" ,score[2] ,"MSE: ", score[1])
+		return score[2],score[1],score[3],mape
 
 
-def mean_absolute_percentage_error(y_true, y_pred): 
-	y_true, y_pred = np.array(y_true), np.array(y_pred)
-	return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+# def mean_absolute_percentage_error(y_true, y_pred): 
+# 	y_true, y_pred = np.array(y_true), np.array(y_pred)
+# 	return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 	
 def calc_mape(pred,obsY):
 	mape = []
@@ -223,53 +246,88 @@ def freeway_dataset(dataset, look_back=1):
 
 
 def main():
-	ID_Espira = "4_ct4"
-	train_set, test_set = get_data(ID_Espira)
-
-	train_cp = copy.deepcopy(train_set)
-	test_cp = copy.deepcopy(test_set)
-	
-	smooth_train, df_train= smooth_data(train_cp, "train_2")
-	smooth_test, df_test = smooth_data(test_cp, "test_2")
-
-	transform_data("lstm/train_2.csv","lstm/train_formatted.csv")	
-	transform_data("lstm/test_2.csv","lstm/test_formatted.csv")
-
-	trainX, trainY = get_nn_data('lstm/train_formatted.csv')
-	testX, testY = get_nn_data('lstm/test_formatted.csv')
-
-	################## freeway dataset ###########################
-	dataframe = pd.read_csv('freeway_data/freeway_data2.csv', usecols=[1], engine='python')
-	dataset = dataframe.values
-	dataset = dataset.astype('float32')
-
-	# split into train and test sets
-
-	train_size = int(len(dataset) * 0.80)
-	test_size = len(dataset) - train_size
-	train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
-	print("Freeway data length")
-	print(len(train), len(test))
-
-
-	f_trainX, f_trainY = freeway_dataset(train,6)
-	f_testX, f_testY =freeway_dataset(test,6)
-	
-	################# LSTM Network ##################################
 	n_features = 1
-	n_steps = 6
-	epochs = 50
-	model, history = lstm_model(f_trainX,f_trainY,n_features,n_steps,epochs)
-	#evaluate_model("lstm/train_formatted.csv", model,n_features)
-	#evaluate_model("lstm/test_formatted.csv", model,n_features)
-	evaluate_model(f_trainX,model,n_features,1,f_trainY)
-	evaluate_model(f_testX,model,n_features,1,f_testY)
-	# number_zeros = 0
-	# for i in f_testY:
-	# 	if i==0:
-	# 		number_zeros+=1
-	# print(number_zeros)
-	# print(len(f_testY))
+	n_steps = 3
+	epochs = 20
+	
+	x = input("1 - Espiras; 2 - Autoestradas :")
+
+	if x and int(x)==1:
+		ID_Espira = "4_ct4"
+		train_set, test_set = get_data(ID_Espira)
+
+		train_cp = copy.deepcopy(train_set)
+		test_cp = copy.deepcopy(test_set)
+		
+		smooth_train, df_train= smooth_data(train_cp, "train_2")
+		smooth_test, df_test = smooth_data(test_cp, "test_2")
+
+		transform_data("lstm/train_2.csv","lstm/train_formatted.csv")	
+		transform_data("lstm/test_2.csv","lstm/test_formatted.csv")
+
+		f_trainX, f_trainY = get_nn_data('lstm/train_formatted.csv')
+		f_testX, f_testY = get_nn_data('lstm/test_formatted.csv')
+
+
+		model, history = lstm_model(f_trainX,f_trainY,n_features,n_steps,epochs)
+		n_layers  = len(model.layers)-1
+		n_units = []
+		for i in model.layers:
+			if "lstm" in i.get_config()['name']:
+				n_units.append(i.get_config()['units'])
+
+			#evaluate_model("lstm/train_formatted.csv", model,n_features)
+			#evaluate_model("lstm/test_formatted.csv", model,n_features)
+			mae,rmse,mape,mape_approx= evaluate_model(f_trainX,model,n_features,1,f_trainY)
+			tmae,trmse,tmape,tmape_approx = evaluate_model(f_testX,model,n_features,1,f_testY)
+			if not (os.path.exists("lstm_loopsensor_results.csv")):
+				out_file =  csv.writer(open("lstm_loopsensor_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
+				header =["Espira","nr_past_ts","epochs","hidden_layers","n_units","mae","rmse","mape","test_mae", "test_rmse", "test_mape"]
+				out_file.writerow(header)
+			else:
+				out_file =  csv.writer(open("lstm_loopsensor_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
+			out_file.writerow([ID_Espira, n_steps, epochs, n_layers, n_units, mae, rmse, mape_approx, tmae, trmse, tmape_approx])
+
+	else: ################## freeway dataset ###########################
+		
+		dataframe = pd.read_csv('freeway_data/freeway_data2.csv', usecols=[1], engine='python')
+		dataset = dataframe.values
+		dataset = dataset.astype('float32')
+
+		# split into train and test sets
+
+		train_size = int(len(dataset) * 0.80)
+		test_size = len(dataset) - train_size
+		train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
+		print("Freeway data length")
+		print(len(train), len(test))
+
+
+		f_trainX, f_trainY = freeway_dataset(train,6)
+		f_testX, f_testY =freeway_dataset(test,6)
+		
+		################# LSTM Network ##################################
+		
+		model, history = lstm_model(f_trainX,f_trainY,n_features,n_steps,epochs)
+		n_layers  = len(model.layers)-1
+		n_units = []
+		for i in model.layers:
+			if "lstm" in i.get_config()['name']:
+				n_units.append(i.get_config()['units'])
+
+			#evaluate_model("lstm/train_formatted.csv", model,n_features)
+			#evaluate_model("lstm/test_formatted.csv", model,n_features)
+			mae,rmse,mape,mape_approx= evaluate_model(f_trainX,model,n_features,1,f_trainY)
+			tmae,trmse,tmape,tmape_approx = evaluate_model(f_testX,model,n_features,1,f_testY)
+			if not (os.path.exists("lstm_freeway_results.csv")):
+				out_file =  csv.writer(open("lstm_freeway_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
+				header =["filename","nr_past_ts","epochs","hidden_layers","n_units","mae","rmse","mape","test_mae", "test_rmse", "test_mape"]
+				out_file.writerow(header)
+			else:
+				out_file =  csv.writer(open("lstm_freeway_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
+			out_file.writerow(["freeway_data2.csv", n_steps, epochs, n_layers, n_units, mae, rmse, mape, tmae, trmse, tmape])
+
+
 
 
 

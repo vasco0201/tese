@@ -3,7 +3,21 @@ Dúvidas:
 -> no arima não dá para ir fazendo "refit" e o arima não é tão bom a generalizar e also, as redes neuronais utilizam sempre 3 inputs passados de dados reais para fazer a predição enquanto que aqui ele consegue prever logo para o dia todo
 -> arima é menos scalable?
 Next steps:
+-> Escrever os resultados por ordem:
+	Freeways:
+		nn 
 
+		[[array([8.473366], dtype=float32)], [array([8.599126], dtype=float32)], [array([10.219774], dtype=float32)], [array([12.448182], dtype=float32)]]
+		>>> train_mape_evo
+		[[array([8.283012], dtype=float32)], [array([8.664083], dtype=float32)], [array([10.009747], dtype=float32)], [array([12.077845], dtype=float32)]]
+
+		arima
+		lstm
+	Espiras:
+		nn
+		arima
+		lstm
+-> Quando for registar os resultados das espiras devia tratar os 0 carros como missing values
 -> Registar o erro para cada horizonte de predição para os dados das auto estradas
 -> Tenho de ver como é que a loss evolui para cada horizonte de predição 
 -> Falta ver a evolução da loss para os dados das espiras

@@ -22,7 +22,7 @@ def get_data(filename,iteration):
 	#print(data_np)
 	miss_values = 0
 	for i in range(len(data_np)):
-	    if (math.isnan(data_np[i][1])):
+	    if (math.isnan(data_np[i][1])) or (data_np[i][1]==0):
 	        miss_values +=1
 	        past_values = len(data_np[:i])
 	        if (i == (len(data_np)-1)):

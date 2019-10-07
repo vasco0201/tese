@@ -594,24 +594,14 @@ def main():
 	# 	pickle.dump(test_mape_evo, fp)
 
 
+	
 	#plot_mape(train_mape_evo,test_mape_evo,1)
 
 
-		#smoothing with z score
-		#NOT IN USE
-		#zscore_train = smooth_zscore(train_cp)
+	#smoothing with z score
+	#NOT IN USE
+	#zscore_train = smooth_zscore(train_cp)
 
-		#Original datasets before smoothing
-
-	# dataframe = pd.read_csv('train.csv')
-	# dataset = dataframe.drop(columns=["Data"])
-	# dataset = dataset.values
-	# train = dataset.astype('float32')
-
-	# dataframe = pd.read_csv('test.csv')
-	# dataset = dataframe.drop(columns=["Data"])
-	# dataset = dataset.values
-	# test = dataset.astype('float32')
 	
 	# # plot differences between original and smoothed data
 	# plot_changes(train, df_train)
@@ -637,30 +627,39 @@ def main():
 
 	###############################################################
 	# freeway dataset
-	# dataframe = pd.read_csv("freeway_data/freeway_data2.csv", usecols=[1], engine='python')
-	# dataset = dataframe.values
-	# dataset = dataset.astype('float32')
-
-	# train_size = int(len(dataset) * 0.80)
-	# test_size = len(dataset) - train_size
-	# train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
-	# print(len(train), len(test))
 	
-	with open("train_mape_lst.txt", "rb") as fp:   # Unpickling
-		train_mape_evo = pickle.load(fp)
-	with open("test_mape_lst.txt", "rb") as fp:   # Unpickling
-		test_mape_evo = pickle.load(fp)
-	i = 0
-	for interval in [15,30,45,60]:
+	# with open("trainMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
+	# 	train_mape_evo = pickle.load(fp)
+	# with open("testMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
+	# 	test_mape_evo = pickle.load(fp)
+	
 
-		train, test = freeway_preprocess("freeway_data/freeway_data2.csv",interval)
+	#after all the tests are done load the lists and compute avg
+	# avg_train_mape_evo= []
+	# avg_test_mape_evo= []
+
+	# for i in range(len(train_mape_evo)):
+	# 	print(len(train_mape_evo[i]))
+	# 	avg_train_mape_evo.append(sum(train_mape_evo[i])/len(train_mape_evo[i]))
+	# 	avg_test_mape_evo.append(sum(test_mape_evo[i])/len(test_mape_evo[i]))
+
+	# print(avg_train_mape_evo)
+	# print(avg_test_mape_evo)
+	train_mape_evo = [[],[],[],[],[],[]] 
+	test_mape_evo =	[[],[],[],[],[],[]]
+	i = 0
+	for interval in [1,2,3,4,5,6,7]:
+		print("------------------------------------------------------------------")
+		print("Tou no:", interval)
+		print("------------------------------------------------------------------")
+		train, test = freeway_preprocess("freeway_data/freeway_data2.csv",15)
 		print("Freeway data length")
 		print(len(train), len(test))
 
-		trainX, trainY = freeway_dataset(train,3)
-		testX, testY =freeway_dataset(test,3)
+		trainX, trainY = freeway_dataset(train,interval)
+		testX, testY =freeway_dataset(test,interval)
 		
-		model, history= nn_model(trainX,trainY,"cenas",3,600)
+		model, history= nn_model(trainX,trainY,"cenas",interval,600)
 		
 		mape, mae, mse,rmape = evaluate_model(trainX, model, 1,trainY)
 		train_mape_evo[i].append(mape)
@@ -669,9 +668,9 @@ def main():
 		gc.collect()
 		i+=1
 	print(train_mape_evo)
-	with open("train_mape_lst.txt", "wb") as fp:
+	with open("trainMAPE_prev_ts.txt", "wb") as fp:
  		pickle.dump(train_mape_evo, fp)
-	with open("test_mape_lst.txt", "wb") as fp:
+	with open("testMAPE_prev_ts.txt", "wb") as fp:
 		pickle.dump(test_mape_evo, fp)
 	print(i)
 

@@ -1,4 +1,5 @@
 Dúvidas:
+-> tamanho do train set é muito menor no arima porque demora anos a compilar se for igual ao da nn
 -> Devia testar tudo nas mesmas condicoes (o tamanho do test set devia ser o mesmo)? Não? Perguntar ao professor como é que faço isto, porque nas redes eu mando depois um conjunto de valores de tamanho indefinido para ele predizer e no arima é diferente, dizemos o numero de steps que queremos predizer e ele faz
 -> no arima não dá para ir fazendo "refit" e o arima não é tão bom a generalizar e also, as redes neuronais utilizam sempre 3 inputs passados de dados reais para fazer a predição enquanto que aqui ele consegue prever logo para o dia todo
 -> arima é menos scalable?

@@ -5,6 +5,7 @@ import sys
 import os
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import datetime
 from scipy import stats
 import statistics
 from keras.models import Sequential
@@ -18,6 +19,7 @@ import csv
 from os import listdir
 from os.path import isfile, join
 import os.path
+import pickle
 
 curr_dir = os.getcwd()
 
@@ -53,9 +55,6 @@ def get_data(ID_Espira):
 	train_size = int(len(dataset_2) * 0.80)
 	test_size = len(dataset_2) - train_size
 	train, test = dataset_2[0:train_size,:], dataset_2[train_size:len(dataset_2),:]
-	
-	#np.delete(train_df, np.s_[0], axis=1)
-	#np.delete(test_df,np.s_[0], axis=1)
 	
 	train_df = pd.DataFrame(train)
 	test_df = pd.DataFrame(test)
@@ -167,7 +166,6 @@ def lstm_model(trainX,trainY,n_features,n_steps,n_epochs):
 	model.add(LSTM(64, activation='relu', input_shape=(n_steps, n_features), kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
 	#model.add(LSTM(32, activation='relu', kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
 	#return_sequences=True
-
 	model.add(Dense(1))
 	model.compile(optimizer=adam, loss='mse',metrics=['mse','mae','mape'])
 	# fit model
@@ -235,23 +233,100 @@ def calc_mape(pred,obsY):
 ################## FREEWAY DATA ########################
 def freeway_dataset(dataset, look_back=1):
     dataX, dataY = [], []
+    #print(dataset)
     for i in range(len(dataset)-look_back-1):
-        a = dataset[i:(i+look_back), 0]
+        a = dataset[i:(i+look_back)]
         dataX.append(a)
-        dataY.append(dataset[i + look_back, 0])
+        dataY.append(dataset[i + look_back])
     return np.array(dataX), np.array(dataY)
 
+def freeway_preprocess(filename,interval=15,bus_day=0): 
+	#if bus_day flag = 1 then the same weekday at the same time of day will considered in the prediction
+	dataframe = pd.read_csv(str(filename), usecols=[1], engine='python')
+	dataset = dataframe.values
+	dataset = dataset.astype('float32')
+	new_dataset=[]
+	i = 0
+	if interval != 15:
+		while i < len(dataset):
+			if interval == 30:
+				temp = dataset[i]+dataset[i+1]
+				i+=2
+			elif interval == 45:
+				temp = dataset[i]+dataset[i+1]+dataset[i+2]
+				i+=3
+			elif interval == 60:
+				temp = dataset[i]+dataset[i+1]+dataset[i+2]+dataset[i+3]
+				i+=4
+			else: 
+				new_dataset = dataset
+				break
+			new_dataset.append(temp)
+	else:
+		#dataframe = pd.read_csv(str(filename),engine='python')
+	# 	dataset = dataframe.values
+	 	new_dataset = dataset
+	# 	print(dataset)
+	# 	if bus_day == 1:
+	# 		print("ola")
 
-	
+	new_dataset = np.asarray(new_dataset)
+
+	# split into train and test sets
+	train_size = int(len(new_dataset) * 0.80)
+	test_size = len(new_dataset) - train_size
+	train, test = new_dataset[0:train_size,:], new_dataset[train_size:len(new_dataset),:]
+def last_business_day(dates,trainX,trainY):
+	new_x = []
+	new_y = []
+	#print(dates)
+	first_week = 0
+	length= len(trainX)
+	for i in range(len(trainX)):
+		curr_date = datetime.datetime.strptime(trainX[i][-1][0], '%Y-%m-%d %H:%M:%S')
+		#print(curr_date.weekday())
+		last_busday = curr_date - datetime.timedelta(days=7)
+		temp_busday = str(last_busday)
+		if ([temp_busday]) in dates:
+			target = find_element(trainX, temp_busday)
+			temp = copy.deepcopy(trainX[i][:,1])
+			temp = np.concatenate((temp,[target[1]]),axis=0)
+			
+			
+			new_x.append(temp) #ja tenho a cena que necessito
+			new_y.append(trainY[i][1])
+			#print(new_x)
+			#sys.exit()
+		#print(curr_date.weekday())
+		#print(last_busday.weekday())
+		#print(last_busday)
+		if i%1000==0:
+			print("Tou na iteracao ", i, " /",length)
+		if i==1000:
+			print(new_x)
+			print(new_y)
+	return np.array(new_x),np.array(new_y)
+	#tenho de ver se existe nos dados odia anterior e se nao houver nao ponho no novo df
+def split_dataset(dataset,train_ratio):
+	train_size = int(len(dataset) * train_ratio)
+	test_size = len(dataset) - train_size
+	train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
+	return train, test
+def find_element(x,target):
+	for i in range(len(x)):
+		for j in range(len(x[i])):
+			#print(x[i])
+			if x[i][j][0] == target:
+				return x[i][j]
 
 
 def main():
 	n_features = 1
-	n_steps = 3
-	epochs = 20
+	n_steps = 4
+	epochs = 50
 	
-	x = input("1 - Espiras; 2 - Autoestradas :")
-
+	#x = input("1 - Espiras; 2 - Autoestradas :")
+	x=2
 	if x and int(x)==1:
 		ID_Espira = "4_ct4"
 		train_set, test_set = get_data(ID_Espira)
@@ -288,26 +363,78 @@ def main():
 				out_file =  csv.writer(open("lstm_loopsensor_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
 			out_file.writerow([ID_Espira, n_steps, epochs, n_layers, n_units, mae, rmse, mape_approx, tmae, trmse, tmape_approx])
 
-	else: ################## freeway dataset ###########################
-		
-		dataframe = pd.read_csv('freeway_data/freeway_data2.csv', usecols=[1], engine='python')
-		dataset = dataframe.values
-		dataset = dataset.astype('float32')
+	else: ################## freeway dataset ##########################
+		#### Include data from the previous day at the same time 
+		f_trainX, f_trainY = [],[]
+		f_testX, f_testY = [],[]
+		bus_day=1
+		if bus_day ==0:
+			dataframe = pd.read_csv('freeway_data/freeway_data2.csv',usecols=[1] ,engine='python')
+			dataset = dataframe.values
+			dataset = dataset.astype('float32')
+			train,test = split_dataset(dataset,0.80)
+			
+			f_trainX, f_trainY = freeway_dataset(train,3)
+			f_testX, f_testY = freeway_dataset(test,3)
 
-		# split into train and test sets
+		if bus_day ==1:
+			# new_file = open("temp_file.txt","w")
+			# train,test = split_dataset(dataset,0.80)
+			# trainXold, trainYold = freeway_dataset(train,3)
+			# for i in range(len(trainXold)):
+			# 	new_file.write(str(trainXold[i][0][0]) + " " + str(trainXold[i][1][0]) + " " + str(trainXold[i][2][0]) + " " + str(trainYold[i][0]) +"\n")
+			dataframe = pd.read_csv('freeway_data/freeway_data2.csv', engine='python')
+			dataset = dataframe.values
+			#dataset = dataset.astype('float32')
+			# split into train and test sets
 
-		train_size = int(len(dataset) * 0.80)
-		test_size = len(dataset) - train_size
-		train, test = dataset[0:train_size,:], dataset[train_size:len(dataset),:]
-		print("Freeway data length")
-		print(len(train), len(test))
+			dates_df = pd.read_csv('freeway_data/freeway_data2.csv', usecols=[0],engine='python')
+			dates_array = dates_df.values
+
+			train,test = split_dataset(dataset,0.80)
+
+			dates_train, dates_test = split_dataset(dates_array,0.80)
+			# f_trainX, f_trainY = freeway_dataset(train,3)
+			# f_trainX, f_trainY = last_business_day(dates_train,f_trainX,f_trainY)
+
+			# f_trainX = f_trainX.astype('float32')
+			# f_trainY = f_trainY.astype('float32')
+
+			# f_testX, f_testY = freeway_dataset(test,3)
+			# f_testX, f_testY = last_business_day(dates_test,f_testX,f_testY)
+			
+			# f_testX = f_testX.astype('float32')
+			# f_testY = f_testY.astype('float32')
+			##################################################################
+			#saves the dataset with the same bus day since it takes forever to compute
+			
+			# with open("f_trainX.txt", "wb") as fp:
+			# 	pickle.dump(f_trainX, fp)
+			# with open("f_testX.txt", "wb") as fp:
+			# 	pickle.dump(f_testX, fp)
+			# with open("f_trainY.txt", "wb") as fp:
+			# 	pickle.dump(f_trainY, fp)
+			# with open("f_testY.txt", "wb") as fp:
+			# 	pickle.dump(f_testY, fp)
+			##################################################################
+
+			with open("f_trainX.txt", "rb") as fp:
+				f_trainX = pickle.load(fp)
+			with open("f_testX.txt", "rb") as fp:
+				f_testX = pickle.load(fp)
+			with open("f_trainY.txt", "rb") as fp:
+				f_trainY = pickle.load(fp)
+			with open("f_testY.txt", "rb") as fp:
+				f_testY = pickle.load(fp)
 
 
-		f_trainX, f_trainY = freeway_dataset(train,6)
-		f_testX, f_testY =freeway_dataset(test,6)
-		
+			new_file = open("dataWithbusday.txt","w")
+			for i in range(len(f_trainX)):
+				new_file.write(str(f_trainX[i][0]) + " " + str(f_trainX[i][1]) + " " + str(f_trainX[i][2]) + " " +  str(f_trainX[i][3]) + " " + str(f_trainY[i]) +"\n")
+
+
 		################# LSTM Network ##################################
-		
+		n_steps=4
 		model, history = lstm_model(f_trainX,f_trainY,n_features,n_steps,epochs)
 		n_layers  = len(model.layers)-1
 		n_units = []
@@ -325,7 +452,7 @@ def main():
 				out_file.writerow(header)
 			else:
 				out_file =  csv.writer(open("lstm_freeway_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
-			out_file.writerow(["freeway_data2.csv", n_steps, epochs, n_layers, n_units, mae, rmse, mape, tmae, trmse, tmape])
+			out_file.writerow(["freeway_data2.csv w/bday", n_steps, epochs, n_layers, n_units, mae, rmse, mape, tmae, trmse, tmape])
 
 
 

@@ -628,10 +628,6 @@ def main():
 	###############################################################
 	# freeway dataset
 	
-	# with open("trainMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
-	# 	train_mape_evo = pickle.load(fp)
-	# with open("testMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
-	# 	test_mape_evo = pickle.load(fp)
 	
 
 	#after all the tests are done load the lists and compute avg
@@ -645,10 +641,16 @@ def main():
 
 	# print(avg_train_mape_evo)
 	# print(avg_test_mape_evo)
-	train_mape_evo = [[],[],[],[],[],[]] 
-	test_mape_evo =	[[],[],[],[],[],[]]
-	i = 0
-	for interval in [1,2,3,4]:#,5,6,7]:
+	# train_mape_evo = [[],[],[],[],[],[]] 
+	# test_mape_evo =	[[],[],[],[],[],[]]
+	with open("trainMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
+		train_mape_evo = pickle.load(fp)
+	with open("testMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
+		test_mape_evo = pickle.load(fp)
+	train_mape_evo.append([])
+	test_mape_evo.append([])
+	i = 4
+	for interval in [5,6,7]:
 		print("------------------------------------------------------------------")
 		print("Tou no:", interval)
 		print("------------------------------------------------------------------")

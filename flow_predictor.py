@@ -364,7 +364,7 @@ def nn_model(trainX,trainY,params,dim_input,n_epochs=200):
 	model.compile(loss='mean_squared_error', optimizer=adam,metrics=['mse','mae','mape'])
 	patience= int(round(n_epochs/3))
 	es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=patience)
-	history= model.fit(trainX, trainY, epochs=n_epochs, verbose=2, batch_size=64,validation_split=0.2)
+	history= model.fit(trainX, trainY, epochs=n_epochs, verbose=2, batch_size=64,validation_split=0.2, callbacks=[es])
 	
 	return model,history
 
@@ -647,8 +647,6 @@ def main():
 		train_mape_evo = pickle.load(fp)
 	with open("testMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
 		test_mape_evo = pickle.load(fp)
-	train_mape_evo.append([])
-	test_mape_evo.append([])
 	i = 4
 	for interval in [5,6,7]:
 		print("------------------------------------------------------------------")
@@ -660,25 +658,23 @@ def main():
 
 		trainX, trainY = freeway_dataset(train,interval)
 		testX, testY =freeway_dataset(test,interval)
-		
+		print(len(trainX[0]))
 		model, history= nn_model(trainX,trainY,"cenas",interval,600)
 		
 		mape, mae, mse,rmape = evaluate_model(trainX, model, 1,trainY)
 		train_mape_evo[i].append(mape)
-		mape, mae, mse,rmape = evaluate_model(testX, model, 1,testY)
-		test_mape_evo[i].append(mape)
+		tmape, tmae, tmse,trmape = evaluate_model(testX, model, 1,testY)
+		test_mape_evo[i].append(tmape)
 		gc.collect()
 		i+=1
-	print(train_mape_evo)
+	#print(train_mape_evo)
+	print(test_mape_evo)
 	with open("trainMAPE_prev_ts.txt", "wb") as fp:
  		pickle.dump(train_mape_evo, fp)
 	with open("testMAPE_prev_ts.txt", "wb") as fp:
 		pickle.dump(test_mape_evo, fp)
 	print(i)
-
-
-
-
+	
 
 
 

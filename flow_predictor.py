@@ -349,11 +349,13 @@ def nn_model(trainX,trainY,params,dim_input,n_epochs=200):
 	model = Sequential()
 	layer1 = Dense(64,input_dim=dim_input, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
 	layer2 = Dense(64, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
-	layer3 = Dense(32, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
+	layer3 = Dense(64, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
+	layer4 = Dense(64, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
 	#layer3 = Dense(400, activation='relu')
 	model.add(layer1)
 	model.add(layer2)
-	#model.add(layer3)
+	model.add(layer3)
+	model.add(layer4)
 	model.add(Dense(1))
 	#optimizers 
 	sgd = optimizers.SGD(lr=0.001)
@@ -432,7 +434,7 @@ def evaluate_model(filename, model,flag=0, obsY="data"):
 		score = model.evaluate(obsX, obsY, verbose=0)
 		#print("MAE:" ,score[2] ,"MSE: ", score[1])
 		#plot_results(pred, obsY, "teste",1)
-		return m_mape, score[2], score[1],score[3]
+		return m_mape, score[2], score[1],score[3],score[0]
 	else:
 		pred = model.predict(filename)
 		mape = []
@@ -448,7 +450,7 @@ def evaluate_model(filename, model,flag=0, obsY="data"):
 
 		score = model.evaluate(filename, obsY, verbose=0)
 		#print("MAE:" ,score[2] ,"MSE: ", score[1])
-		return m_mape, score[2], score[1],score[3]
+		return m_mape, score[2], score[1],score[3],score[0]
 
 
 
@@ -519,6 +521,60 @@ def plot_mape(train_mape_lst,test_mape_lst,flag_agg=0):
 	plt.show()
 
 	plt.close()
+############################# TESTS ################################
+
+def mape_vs_timealag(filename,epochs):
+	with open("trainMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
+		train_mape_evo = pickle.load(fp)
+	with open("testMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
+		test_mape_evo = pickle.load(fp)
+	i = 4
+	for interval in [5,6,7]:
+		print("------------------------------------------------------------------")
+		print("Tou no:", interval)
+		print("------------------------------------------------------------------")
+		train, test = freeway_preprocess(filename,15)
+		print("Freeway data length")
+		print(len(train), len(test))
+
+		trainX, trainY = freeway_dataset(train,interval)
+		testX, testY =freeway_dataset(test,interval)
+		print(len(trainX[0]))
+		model, history= nn_model(trainX,trainY,"cenas",interval,epochs)
+		
+		mape, mae, mse,rmape,loss = evaluate_model(trainX, model, 1,trainY)
+		train_mape_evo[i].append(mape)
+		tmape, tmae, tmse,trmape,tloss = evaluate_model(testX, model, 1,testY)
+		test_mape_evo[i].append(tmape)
+		gc.collect()
+		i+=1
+	#print(train_mape_evo)
+	#print(test_mape_evo)
+	with open("trainMAPE_prev_ts.txt", "wb") as fp:
+ 		pickle.dump(train_mape_evo, fp)
+	with open("testMAPE_prev_ts.txt", "wb") as fp:
+		pickle.dump(test_mape_evo, fp)
+	print(i)
+def loss_nlayers(filename,epochs):
+	with open("trainloss_nlayers.txt", "rb") as fp:   # Unpickling
+		loss_lst = pickle.load(fp)
+	with open("testloss_nlayers.txt", "rb") as fp:   # Unpickling
+		testloss_lst = pickle.load(fp)
+	interval = 4
+	train, test = freeway_preprocess(filename,15)
+	trainX, trainY = freeway_dataset(train,interval)
+	testX, testY =freeway_dataset(test,interval)
+	model, history= nn_model(trainX,trainY,"cenas",interval,epochs)
+	mape, mae, mse,rmape,loss = evaluate_model(trainX, model, 1,trainY)
+	tmape, tmae, tmse,trmape,tloss = evaluate_model(testX, model, 1,testY)
+	loss_lst.append(loss)
+	testloss_lst.append(tloss)
+	with open("trainloss_nlayers.txt", "wb") as fp:
+ 		pickle.dump(loss_lst, fp)
+	with open("testloss_nlayers.txt", "wb") as fp:
+		pickle.dump(testloss_lst, fp)
+
+
 
 
 
@@ -643,136 +699,22 @@ def main():
 	# print(avg_test_mape_evo)
 	# train_mape_evo = [[],[],[],[],[],[]] 
 	# test_mape_evo =	[[],[],[],[],[],[]]
-	with open("trainMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
-		train_mape_evo = pickle.load(fp)
-	with open("testMAPE_prev_ts.txt", "rb") as fp:   # Unpickling
-		test_mape_evo = pickle.load(fp)
-	i = 4
-	for interval in [5,6,7]:
-		print("------------------------------------------------------------------")
-		print("Tou no:", interval)
-		print("------------------------------------------------------------------")
-		train, test = freeway_preprocess("freeway_data/freeway_data2.csv",15)
-		print("Freeway data length")
-		print(len(train), len(test))
 
-		trainX, trainY = freeway_dataset(train,interval)
-		testX, testY =freeway_dataset(test,interval)
-		print(len(trainX[0]))
-		model, history= nn_model(trainX,trainY,"cenas",interval,600)
-		
-		mape, mae, mse,rmape = evaluate_model(trainX, model, 1,trainY)
-		train_mape_evo[i].append(mape)
-		tmape, tmae, tmse,trmape = evaluate_model(testX, model, 1,testY)
-		test_mape_evo[i].append(tmape)
-		gc.collect()
-		i+=1
-	#print(train_mape_evo)
-	print(test_mape_evo)
-	with open("trainMAPE_prev_ts.txt", "wb") as fp:
- 		pickle.dump(train_mape_evo, fp)
-	with open("testMAPE_prev_ts.txt", "wb") as fp:
-		pickle.dump(test_mape_evo, fp)
-	print(i)
 	
+	######## tests ############
+	#evolution of mape with the increase in the input size
+	#mape_vs_timealag("freeway_data/freeway_data2.csv",600)
+
+	#variation of loss with n_hidden layers
+	loss_nlayers("freeway_data/freeway_data2.csv",600)
+
+
 
 
 
 
 
 	###################################################################
-	# run = 1
-	# model = ""
-	# history = ""
-	# train_runs = [[],[],[],[]]#alterar para 3
-	# test_runs = [[],[],[],[]]
-	# train_mape_ts = [0] * 10	
-	# test_mape_ts = [0] * 10
-	# epochs=1000
-	# r=4
-	# total_runs= 4
-	# while r <=total_runs:
-	# 	#time.sleep(15)
-	# 	run=10
-	# 	while run <= 10:
-	# 		print("Nr of past ts: ", run)
-	# 		trainX, trainY = freeway_dataset(train,3) #change to run #######
-	# 		testX, testY =freeway_dataset(test,3)
-	# 		model, history= nn_model(trainX,trainY,"cenas",3,epochs) #Eventualmente dar a opcao de escolher os hiperparametros
-	# 		mape, mae, mse,rmape= evaluate_model(trainX, model, 1,trainY)
-	# 		train_runs[0].append(mape)
-	# 		train_runs[1].append(mae)
-	# 		train_runs[2].append(mse)
-	# 		train_runs[3].append(rmape)
-
-	# 		train_mape_ts[run-1] += mape/total_runs
-	# 		#mape, mae, mse = evaluate_model('train_formatted.csv',model)
-	# 		#train_runs[0].append(mape)
-	# 		#train_runs[1].append(mae)
-	# 		#train_runs[2].append(mse)
-	# 		print("-------------------------------------")
-	# 		print("Train mape: ", mape)
-	# 		print("Real train: ", rmape)
-	# 		print("Current shape of list: ",train_mape_ts,"\n")
-			
-	# 		mape, mae, mse,rmape = evaluate_model(testX, model, 1,testY)
-	# 		test_runs[0].append(mape)
-	# 		test_runs[1].append(mae)
-	# 		test_runs[2].append(mse)
-	# 		test_runs[3].append(rmape)
-	# 		test_mape_ts[run-1] += mape/total_runs
-
-	# 		print("Test mape: ", mape)
-	# 		print("Real test: ", rmape)
-	# 		print("Current shape of list: ",test_mape_ts)
-	# 		print("-------------------------------------")
-	# 		#if run==5:
-	# 		#	time.sleep(10)
-
-	# 		#mape, mae, mse = evaluate_model('test_formatted.csv',model)
-	# 		#test_runs[0].append(mape)
-	# 		#test_runs[1].append(mae)
-	# 		#test_runs[2].append(mse)
-	# 		run +=1
-
-	# 	print("---------------------------------------------")
-	# 	print("Vou mudar o r para", r+1)
-	# 	r+=1
-	# 	print("R = ", r)
-	# 	print("---------------------------------------------")
-		
-
-	#plot_loss(history,15)
-	#plot_mape(train_mape_ts,test_mape_ts,0)
-	# print("----------------------------------------------")
-	# print("Data Aggregation interval: ",interval)
-	# print("Average of 3 runs:  ")
-	
-	# print("Train")
-	# print("MAPE: ", sum(train_runs[0])/len(train_runs[0]))
-	# print("MAE: ",sum(train_runs[1])/len(train_runs[1]))
-	# print("MSE: ",sum(train_runs[2])/len(train_runs[2]))
-
-	# print("Test")
-	# print("MAPE: ", sum(test_runs[0])/len(test_runs[0]))
-	# print("MAE: ",sum(test_runs[1])/len(test_runs[1]))
-	# print("MSE: ",sum(test_runs[2])/len(test_runs[2]))
-
-
-	# print("Train")
-	# print("MAPE: ", sum(train_runs[0])/len(train_runs[0]))
-	# print("REAL MAPE: ", sum(train_runs[3])/len(train_runs[3]))
-	# print("MAE: ",sum(train_runs[1])/len(train_runs[1]))
-	# print("MSE: ",sum(train_runs[2])/len(train_runs[2]))
-
-	# print("Test")
-	# print("MAPE: ", sum(test_runs[0])/len(test_runs[0]))
-	# print("REAL MAPE: ", sum(test_runs[3])/len(test_runs[3]))
-	# print("MAE: ",sum(test_runs[1])/len(test_runs[1]))
-	# print("MSE: ",sum(test_runs[2])/len(test_runs[2]))
-
-
-
 	# print("----------------------------------------------")
 
 	#evaluate model

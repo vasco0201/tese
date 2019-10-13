@@ -173,7 +173,7 @@ def lstm_model(trainX,trainY,n_features,n_steps,n_epochs):
 	patience= int(round(n_epochs/3))
 	es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=patience)
 
-	history = model.fit(trainX, trainY, epochs=n_epochs, verbose=2,validation_split=0.20, callbacks=[es])
+	history = model.fit(trainX, trainY, epochs=n_epochs, verbose=0,validation_split=0.20, callbacks=[es])
 	return model,history
 
 def model_results(trainX, trainY, testX, testY,model):
@@ -201,9 +201,9 @@ def evaluate_model(filename, model,n_features,flag=0, obsY="data"):
 		obsX = obsX.reshape((obsX.shape[0], obsX.shape[1], n_features))
 		pred = model.predict(obsX)
 		mape = calc_mape(pred,obsY)
-		print("MAPE: ",mape)
+		#print("MAPE: ",mape)
 		score = model.evaluate(obsX, obsY, verbose=0)
-		print("MAE:" ,score[2] ,"MSE: ", score[1])
+		#print("MAE:" ,score[2] ,"MSE: ", score[1])
 		return score[2],score[1],score[3],mape
 		
 		#plot_results(pred, obsY, "teste",1)
@@ -211,9 +211,9 @@ def evaluate_model(filename, model,n_features,flag=0, obsY="data"):
 		filename = filename.reshape((filename.shape[0], filename.shape[1], n_features))
 		pred = model.predict(filename)
 		mape = calc_mape(pred,obsY)
-		print("MAPE: ",mape)
+		#print("MAPE: ",mape)
 		score = model.evaluate(filename, obsY, verbose=0)
-		print("MAE:" ,score[2] ,"MSE: ", score[1])
+		#print("MAE:" ,score[2] ,"MSE: ", score[1])
 		return score[2],score[1],score[3],mape
 
 
@@ -240,6 +240,8 @@ def freeway_dataset(dataset, look_back=1):
         dataX.append(a)
         dataY.append(dataset[i + look_back])
     return np.array(dataX), np.array(dataY)
+
+
 
 def freeway_preprocess(filename,interval=15):
 	dataframe = pd.read_csv(str(filename), usecols=[1], engine='python')
@@ -311,6 +313,40 @@ def find_element(x,target):
 			if x[i][j][0] == target:
 				return x[i][j]
 
+def plot_error(train_mape_lst,test_mape_lst,flag_agg="input_size"):
+	fig, ax = plt.subplots()
+	if flag_agg=="input_size":
+		x = range(1,len(train_mape_lst)+1)
+		ax.set_title("Variation of mape with time window increase",fontsize=14)
+		ax.set_ylabel('Mape',fontsize=14)
+		ax.set_xlabel('Time window size', fontsize=14)
+		title = "mape_timewindow.png"
+	elif flag_agg=="pred_horizon":
+		x = [15,30,45,60]
+		ax.set_title("Variation of mape with increase in prediction horizon",fontsize=14)
+		ax.set_ylabel('Mape',fontsize=14)
+		ax.set_xlabel('Prediction horizon', fontsize=14)
+		title = "mape_aggregation.png"
+	elif flag_agg=="loss_nlayers":
+		x = range(1,len(train_mape_lst)+1)
+		ax.set_title("Variation of loss function",fontsize=14)
+		ax.set_ylabel('Loss',fontsize=14)
+		ax.set_xlabel('Number of layers', fontsize=14)
+		title = "nlayers_loss.png"
+
+	ax.plot(x,train_mape_lst,label="Train",color="red",linewidth=2.0)
+	ax.plot(x,test_mape_lst,label="Test",color="blue",linewidth=2.0)
+	ax.legend(loc='best')
+	ax.set_xticks(x)
+	#ax[0].set_xlabel('Time of day', fontsize=14)
+	ax.grid(True)
+	fig.savefig("/home/vasco/Desktop/freeway_plots/lstm_"+str(title),dpi=100)
+	#plt.subplots_adjust(top=0.935,bottom=0.145,left=0.065,right=0.989,hspace=0.2,wspace=0.2)
+	#plt.tight_layout()
+	#plt.subplots_adjust(bottom=0.19)
+	plt.show()
+
+	plt.close()
 
 
 
@@ -397,6 +433,57 @@ def include_business_day(filename):
 		f_testY = pickle.load(fp)
 	return f_trainX,f_trainY,f_testX,f_testY
 
+def run_multi_aggregation(filename,epochs,n_steps,n_features):
+	#f = open("lstm_mape_multi_aggregation.csv","a+")
+	#f.write("15,30,45,60\n")
+	
+	#g = open("test_lstm_mape_multi_aggregation.csv","a+")
+	#g.write("15,30,45,60\n")
+	
+
+	train_mape_agg = [[],[],[],[]]
+	test_mape_agg = [[],[],[],[]]
+
+	train_rmape_agg = [[],[],[],[]]
+	test_rmape_agg = [[],[],[],[]]
+	#h = open("lstm_mape_multi_aggregation.csv","a+")
+	#h.write("15,30,45,60\n")
+	for run in range(5):
+		i=0
+		print("Run nr:", run+1,"/5")
+		for interval in [15,30,45,60]:
+			train,test = freeway_preprocess(filename,interval)
+
+			trainX, trainY = freeway_dataset(train,n_steps)
+			testX, testY =freeway_dataset(test,n_steps)
+
+			model, history = lstm_model(trainX,trainY,n_features,n_steps,epochs)
+
+			mae,rmse,mape,mape_approx= evaluate_model(trainX,model,n_features,1,trainY)
+			tmae,trmse,tmape,tmape_approx = evaluate_model(testX,model,n_features,1,testY)
+			
+			train_mape_agg[i].append(mape_approx)
+			test_mape_agg[i].append(tmape_approx)
+
+			train_rmape_agg[i].append(mape)
+			test_rmape_agg[i].append(tmape)
+			i+=1
+
+	with open("lstm_train_mape_multi_agg.txt", "wb") as fp:
+ 		pickle.dump(train_mape_agg, fp)
+	with open("lstm_test_mape_multi_agg.txt", "wb") as fp:
+ 		pickle.dump(test_mape_agg, fp)
+	
+	with open("lstm_train_Rmape_multi_agg.txt", "wb") as fp:
+		pickle.dump(train_rmape_agg, fp)
+	with open("lstm_test_Rmape_multi_agg.txt", "wb") as fp:
+		pickle.dump(test_rmape_agg, fp)
+
+		
+
+
+
+
 def run_lstm(f_trainX,f_trainY,n_features,n_steps,epochs):
 	model, history = lstm_model(f_trainX,f_trainY,n_features,n_steps,epochs)
 	n_layers  = len(model.layers)-1
@@ -419,7 +506,7 @@ def run_lstm(f_trainX,f_trainY,n_features,n_steps,epochs):
 
 def main():
 	n_features = 1
-	n_steps = 4
+	n_steps = 5
 	epochs = 50
 	
 	#x = input("1 - Espiras; 2 - Autoestradas :")
@@ -471,8 +558,27 @@ def main():
 
 			######################################################################			
 			#tests the network with multiple input sizes (number of prev occurrences that factor in the pred)
-			mape_vs_timelag("freeway_data/freeway_data2.csv",n_features,epochs)
+			#mape_vs_timelag("freeway_data/freeway_data2.csv",n_features,epochs)
 
+			# with open("lstm_train_mape_ts.txt", "rb") as fp:
+			# 	train_mape_ts = pickle.load(fp)
+			# with open("lstm_test_mape_ts.txt", "rb") as fp:
+			# 	test_mape_ts = pickle.load(fp)
+			# train_mape_ts= train_mape_ts[:-2]
+			# test_mape_ts = test_mape_ts[:-2]
+			# avg_train_mapets = []
+			# avg_test_mapets = []
+			# print(train_mape_ts)
+			# for i in range(len(train_mape_ts)):
+			# 	avg_train_mapets.append((sum(train_mape_ts[i])/len(train_mape_ts[i]))[0])
+			# 	avg_test_mapets.append((sum(test_mape_ts[i])/len(test_mape_ts[i]))[0])
+
+			# plot_error(avg_train_mapets,avg_test_mapets,flag_agg="input_size")
+			#tests performance for multiple time_steps
+			print(n_steps)
+			print(n_features)
+			print(epochs)
+			run_multi_aggregation("freeway_data/freeway_data2.csv",epochs,n_steps,n_features)
 			######################################################################
 
 			#preparation for a normal run of the network

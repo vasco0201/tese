@@ -32,20 +32,24 @@ df <- data.frame(Date = data$Date,
 cutoff = round(0.8*nrow(data))
 
 train = data[1:cutoff,]
+
 test = data[-(1:cutoff),]
 
 ```
 
 ```{r}
-for (i in 1:1){ #change for 96
+#for (i in 1:1){ #change for 96
 
 #data$Date = as.character(data$Date)
 start_date = decimal_date(as.Date(train$Date[1]))
 #diff = as.numeric(as.Date("2002-08-01")-as.Date("2002-01-01"))
 myts_train <- ts(train$Count, start = start_date,frequency = 96)
 #myts_test <- ts(test$Count, start = decimal_date(as.Date("2002-03-01")), frequency = 96)
-
-model = auto.arima(myts_train, seasonal = TRUE)
+start_time <- Sys.time()
+model <- Arima(myts_train, order=c(3,0,2), seasonal = list(order = c(0, 1, 0), period = 96))
+#model = auto.arima(myts_train, seasonal = TRUE)
+end_time <- Sys.time()
+elapsed = end_time-start_time
 
 
 obs_data = test[1,]
@@ -76,16 +80,16 @@ ns = paste ("(",ar_order,",",diff_order,",",ma_order,")", sep = "", collapse = N
 s = paste ("(",s_ar_order,",",s_diff_order,",",s_ma_order,")", sep = "", collapse = NULL)
 model_coef = paste(ns,s,sep="x")
 
-pred_table[nrow(pred_table) + 1,] =list(i,pred_values,obs,mapeError,maeError,rmsError)
+pred_table[nrow(pred_table) + 1,] =list(1,pred_values,obs,mapeError,maeError,rmsError)
 save(pred_table,file="/home/vasco/pred_table.RData")
 
-train = train[-1,]
-new_obs = test[1,]
-test = test[-1,]
+#train = train[-1,]
+#new_obs = test[1,]
+#test = test[-1,]
 
-train[nrow(train) + 1,] = new_obs
+#train[nrow(train) + 1,] = new_obs
 
-}
+#}
 
 
 

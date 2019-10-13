@@ -351,11 +351,15 @@ def nn_model(trainX,trainY,params,dim_input,n_epochs=200):
 	layer2 = Dense(64, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
 	layer3 = Dense(64, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
 	layer4 = Dense(64, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
+	layer5 = Dense(64, activation='relu',kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01))
+	
 	#layer3 = Dense(400, activation='relu')
 	model.add(layer1)
 	model.add(layer2)
 	model.add(layer3)
 	model.add(layer4)
+	model.add(layer5)
+
 	model.add(Dense(1))
 	#optimizers 
 	sgd = optimizers.SGD(lr=0.001)
@@ -494,20 +498,27 @@ def freeway_preprocess(filename,interval=15):
 	return train,test
 #function that plots the variation of mape with the
 #increase in the number of past timeteps considered in the network
-def plot_mape(train_mape_lst,test_mape_lst,flag_agg=0):
+def plot_error(train_mape_lst,test_mape_lst,flag_agg="input_size"):
 	fig, ax = plt.subplots()
-	if flag_agg==0:
+	if flag_agg=="input_size":
 		x = range(1,len(train_mape_lst)+1)
 		ax.set_title("Variation of mape with time window increase",fontsize=14)
 		ax.set_ylabel('Mape',fontsize=14)
 		ax.set_xlabel('Time window size', fontsize=14)
 		title = "mape_timewindow.png"
-	else:
+	elif flag_agg=="pred_horizon":
 		x = [15,30,45,60]
 		ax.set_title("Variation of mape with increase in prediction horizon",fontsize=14)
 		ax.set_ylabel('Mape',fontsize=14)
 		ax.set_xlabel('Prediction horizon', fontsize=14)
 		title = "mape_aggregation.png"
+	elif flag_agg=="loss_nlayers":
+		x = range(1,len(train_mape_lst)+1)
+		ax.set_title("Variation of loss function",fontsize=14)
+		ax.set_ylabel('Loss',fontsize=14)
+		ax.set_xlabel('Number of layers', fontsize=14)
+		title = "nlayers_loss.png"
+
 	ax.plot(x,train_mape_lst,label="Train",color="red",linewidth=2.0)
 	ax.plot(x,test_mape_lst,label="Test",color="blue",linewidth=2.0)
 	ax.legend(loc='best')
@@ -573,6 +584,8 @@ def loss_nlayers(filename,epochs):
  		pickle.dump(loss_lst, fp)
 	with open("testloss_nlayers.txt", "wb") as fp:
 		pickle.dump(testloss_lst, fp)
+	plot_error(loss_lst,testloss_lst,"loss_nlayers")
+
 
 
 
@@ -651,7 +664,7 @@ def main():
 
 
 	
-	#plot_mape(train_mape_evo,test_mape_evo,1)
+	#plot_error(train_mape_evo,test_mape_evo,"pred_horizon")
 
 
 	#smoothing with z score
@@ -706,8 +719,9 @@ def main():
 	#mape_vs_timealag("freeway_data/freeway_data2.csv",600)
 
 	#variation of loss with n_hidden layers
-	loss_nlayers("freeway_data/freeway_data2.csv",600)
-
+	#loss_nlayers("freeway_data/freeway_data2.csv",600)
+	train, test = freeway_preprocess("freeway_data/freeway_data2.csv")
+	print(test[0])
 
 
 

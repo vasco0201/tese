@@ -142,7 +142,7 @@ train <- subset(data, Date < "2002-03-01" )
 test <- subset(data, Date >= "2002-03-01" )
 #diff = as.numeric(as.Date("2002-08-01")-as.Date("2002-01-01"))
 myts_train <- ts(train$Count, start = decimal_date(as.Date("2002-01-01")),frequency = 96)
-myts_test <- ts(test$Count, start = decimal_date(as.Date("2002-03-01")), frequency = 96)
+#myts_test <- ts(test$Count, start = decimal_date(as.Date("2002-03-01")), frequency = 96)
 
 #myts_test <- ts(test$Count, start=1, end=8832, frequency=96)
 

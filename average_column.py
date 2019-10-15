@@ -5,11 +5,13 @@ import sys
 import os
 import time
 import matplotlib.pyplot as plt
-data = pd.read_csv("train_mapets.csv")
+data = pd.read_csv("pred_table.csv")
 print(data.columns)
+print(data.head())
 train_lst= []
 for col in data.columns: 
-    train_lst.append(data[col].mean())
+	print("Average",col,":",data[col].mean())
+sys.exit()
 
 test_lst=[]
 
@@ -49,5 +51,5 @@ def plot_mape(train_mape_lst,test_mape_lst,flag_agg=0):
 
 	plt.close()
 
-plot_mape(train_lst,test_lst,0)
+#plot_mape(train_lst,test_lst,0)
 

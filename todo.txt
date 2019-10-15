@@ -1,4 +1,7 @@
 Dúvidas:
+
+-> falar ao professor sobre o capitulo do arima (as 2 maneiras de testar) e o facto de o erro ser tão baixo
+-> utilizar outro método que não a agregação dos dados para prever com + time steps
 -> preciso de fazer um plot com todos para demonstrar a diferença de performance
 -> tamanho do train set é muito menor no arima porque demora anos a compilar se for igual ao da nnr
 -> Devia testar tudo nas mesmas condicoes (o tamanho do test set devia ser o mesmo)? Não? Perguntar ao professor como é que faço isto, porque nas redes eu mando depois um conjunto de valores de tamanho indefinido para ele predizer e no arima é diferente, dizemos o numero de steps que queremos predizer e ele faz
@@ -7,14 +10,14 @@ Dúvidas:
 Next steps:
 -> Escrever os resultados por ordem:
 	Freeways:
-		nn 
+		nn (para o mm test set 1 dia) : Train Mape:  9.055196744799252
+										Test Mape:  4.569109759487948
 
-		[[array([8.473366], dtype=float32)], [array([8.599126], dtype=float32)], [array([10.219774], dtype=float32)], [array([12.448182], dtype=float32)]]
-		>>> train_mape_evo
-		[[array([8.283012], dtype=float32)], [array([8.664083], dtype=float32)], [array([10.009747], dtype=float32)], [array([12.077845], dtype=float32)]]
+ 
+		arima: re-fit every step -> Test Mape: 2.722629355332856  
+				re-fit every day -> Test Mape: 5.399 (1 day) Test Mape: 8.9 (2 days) Test Mape: 10.13 (4 days)  Test Mape: 12.043616011829 (1 week)
 
-		arima
-		lstm
+		lstm:
 	Espiras:
 		nn
 		arima

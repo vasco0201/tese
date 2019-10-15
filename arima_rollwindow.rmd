@@ -83,11 +83,11 @@ model_coef = paste(ns,s,sep="x")
 pred_table[nrow(pred_table) + 1,] =list(1,pred_values,obs,mapeError,maeError,rmsError)
 save(pred_table,file="/home/vasco/pred_table.RData")
 
-#train = train[-1,]
-#new_obs = test[1,]
-#test = test[-1,]
+train = train[-1,]
+new_obs = test[1,]
+test = test[-1,]
 
-#train[nrow(train) + 1,] = new_obs
+train[nrow(train) + 1,] = new_obs
 
 #}
 

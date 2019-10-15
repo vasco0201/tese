@@ -48,6 +48,7 @@ def plot_loss(history, agg):
 		if i%10==0:
 			new_loss.append(history.history['loss'][i])
 			x_axis.append(i)
+	print(new_loss)
 
 	normie = preprocessing.normalize([history.history['loss']])
 	print(history.history['loss'])
@@ -56,9 +57,9 @@ def plot_loss(history, agg):
 	plt.title('model loss')
 	plt.ylabel('loss')
 	plt.xlabel('epoch')
-	plt.legend(['train', 'test'], loc='upper right')
+	plt.legend(['train'], loc='upper right')
 	plt.show()
-	fig.savefig("losses/"+str(agg)+"min.png",dpi=100)
+	fig.savefig("/content/drive/My Drive/loss"+str(agg)+"min.png",dpi=100)
 	plt.close(fig)
 
 def plot_changes(original, smooth, filename="avg2stdev"):
@@ -357,8 +358,8 @@ def nn_model(trainX,trainY,params,dim_input,n_epochs=200):
 	model.add(layer1)
 	model.add(layer2)
 	model.add(layer3)
-	model.add(layer4)
-	model.add(layer5)
+	#model.add(layer4)
+	#model.add(layer5)
 
 	model.add(Dense(1))
 	#optimizers 
@@ -587,83 +588,99 @@ def loss_nlayers(filename,epochs):
 	plot_error(loss_lst,testloss_lst,"loss_nlayers")
 
 
+def run_multi_aggregation(filename,epochs,n_steps):
+	#f = open("lstm_mape_multi_aggregation.csv","a+")
+	#f.write("15,30,45,60\n")
+	
+	#g = open("test_lstm_mape_multi_aggregation.csv","a+")
+	#g.write("15,30,45,60\n")
+	
+
+	train_mape_agg = [[],[],[],[]]
+	test_mape_agg = [[],[],[],[]]
+
+	train_rmape_agg = [[],[],[],[]]
+	test_rmape_agg = [[],[],[],[]]
+	#h = open("lstm_mape_multi_aggregation.csv","a+")
+	#h.write("15,30,45,60\n")
+	for run in range(5):
+		i=0
+		print("Run nr:", run+1,"/5")
+		for interval in [15,30,45,60]:
+			train,test = freeway_preprocess(filename,interval)
+
+			trainX, trainY = freeway_dataset(train,n_steps)
+			testX, testY =freeway_dataset(test,n_steps)
+
+			model, history= nn_model(trainX,trainY,"cenas",n_steps,epochs)
+			mape_approx, mae, mse,mape,loss = evaluate_model(trainX, model, 1,trainY)
+			tmape_approx, tmae, tmse,tmape,tloss = evaluate_model(testX, model, 1,testY)
+			
+			train_mape_agg[i].append(mape_approx)
+			test_mape_agg[i].append(tmape_approx)
+
+			train_rmape_agg[i].append(mape)
+			test_rmape_agg[i].append(tmape)
+			i+=1
+
+	with open("train_mape_multi_agg.txt", "wb") as fp:
+ 		pickle.dump(train_mape_agg, fp)
+	with open("test_mape_multi_agg.txt", "wb") as fp:
+ 		pickle.dump(test_mape_agg, fp)
+	
+	with open("train_Rmape_multi_agg.txt", "wb") as fp:
+		pickle.dump(train_rmape_agg, fp)
+	with open("test_Rmape_multi_agg.txt", "wb") as fp:
+		pickle.dump(test_rmape_agg, fp)
 
 
 
 
 
 def main():
-	# print("primeira linha da main")
+	n_steps=4
+	epochs=600
 	# #ID_Espira = input("Coloque id da espira: ")
-	# ID_Espira = "4_ct4"
-	# test_date = np.datetime64('2018-08-27')
-	# train_set, test_set = get_data(ID_Espira,0, test_date)
+	ID_Espira = "4_ct4"
+	test_date = np.datetime64('2018-08-27')
+	train_set, test_set = get_data(ID_Espira,0, test_date)
+	print(len(train_set))
+	#dt2, train_set, test_set, dataset = get_data(ID_Espira)
+	train_cp = copy.deepcopy(train_set)
+	test_cp = copy.deepcopy(test_set)
 	
-	# #dt2, train_set, test_set, dataset = get_data(ID_Espira)
-	# train_cp = copy.deepcopy(train_set)
-	# test_cp = copy.deepcopy(test_set)
+	#smoothing both sets_
+	smooth_train, df_train= smooth_data(train_cp, "train_2")
 	
-	# #smoothing both sets_
-	#smooth_train, df_train= smooth_data(train_cp, "train_2")
+	smooth_test, df_test = smooth_data(test_cp, "test_2")
+
+	interval = input("Escolha o horizonte de predicao (15,30,45 ou 60): ")
+	if not interval:
+		interval = 15	
 	
-	# smooth_test, df_test = smooth_data(test_cp, "test_2")
+	smooth_train = pd.read_csv("train_2.csv")
+	smooth_train = smooth_train.values
 
-	#interval = input("Escolha o horizonte de predicao (15,30,45 ou 60): ")
-	#if not interval:
-	#	interval = 15
-	#var = 1
-	# train_mape_evo = [0]*4
-	# test_mape_evo = [0]*4
-	# with open("train_mape_lst.txt", "rb") as fp:   # Unpickling
-	# 	train_mape_evo = pickle.load(fp)
-	# with open("test_mape_lst.txt", "rb") as fp:   # Unpickling
-	# 	test_mape_evo = pickle.load(fp)
-
+	smooth_test = pd.read_csv("test_2.csv")
+	smooth_test = smooth_test.values
 	
-	
-	# smooth_train = pd.read_csv("train_2.csv")
-	# smooth_train = smooth_train.values
+	cenas = aggregate_data(smooth_train,"train", interval)
+	cenas = aggregate_data(smooth_test,"test",interval)
 
-	# smooth_test = pd.read_csv("test_2.csv")
-	# smooth_test = smooth_test.values
-	# #for interval in [15,30,45,60]:
-	# #for p in range(3):
-	# interval=60
-	# print("------------------------------------------")
-	# print(interval)
-	# #print(train_mape_evo)
-	# print("------------------------------------------")
-	# #train_mape_evo[2]=0
-	# #test_mape_evo[2]=0
-	# cenas = aggregate_data(smooth_train,"train", interval)
+	transform_data("train_"+str(interval)+".csv","train_formatted.csv")
+	transform_data("test_"+str(interval)+".csv","test_formatted.csv")
 
-	# cenas = aggregate_data(smooth_test,"test",interval)
-	# transform_data("train_"+str(interval)+".csv","train_formatted.csv")
-	# transform_data("test_"+str(interval)+".csv","test_formatted.csv")
-
-	# trainX, trainY = get_nn_data('train_formatted.csv')
-	# testX, testY = get_nn_data('test_formatted.csv')
+	trainX, trainY = get_nn_data('train_formatted.csv')
+	testX, testY = get_nn_data('test_formatted.csv')
 	
 	 
-	# model, history= nn_model(trainX,trainY,"cenas",3,400) #Eventualmente dar a opcao de escolher os hiperparametros
+	model, history= nn_model(trainX,trainY,"cenas",3,1000) #Eventualmente dar a opcao de escolher os hiperparametros
 	
-	# mape, mae, mse,rmape= evaluate_model(trainX, model, 1,trainY)
-	# train_mape_evo[3] += mape/3
-	# print(mape)
-	# mape, mae, mse,rmape = evaluate_model(testX, model, 1,testY)
-	# print(mape)
-	# test_mape_evo[3] += mape/3
-	# gc.collect()
+	mape_approx, mae, mse, rmape, loss = evaluate_model(trainX, model, 1,trainY)
+	mape_approx, mae, mse, rmape, loss = evaluate_model(testX, model, 1,testY)
 	
-	# print(train_mape_evo)
-	# print(test_mape_evo)
-	# with open("train_mape_lst.txt", "wb") as fp:
-	# 	pickle.dump(train_mape_evo, fp)
-	# with open("test_mape_lst.txt", "wb") as fp:
-	# 	pickle.dump(test_mape_evo, fp)
+	plot_loss(history,15)
 
-
-	
 	#plot_error(train_mape_evo,test_mape_evo,"pred_horizon")
 
 
@@ -672,8 +689,8 @@ def main():
 	#zscore_train = smooth_zscore(train_cp)
 
 	
-	# # plot differences between original and smoothed data
-	# plot_changes(train, df_train)
+	# plot differences between original and smoothed data
+	#plot_changes(train, df_train)
 	#plot_changes(test, df_test)
 	
 	#prepares the data for the nn 
@@ -689,7 +706,7 @@ def main():
 	#transform_data("train_30min.csv","train_formatted.csv")
 	#transform_data("test_30min.csv","test_formatted.csv")
 	
-	# creates and trains the model
+	#creates and trains the model
 	#trainX, trainY = get_nn_data('train_formatted.csv')
 	#testX, testY = get_nn_data('test_formatted.csv')
 		
@@ -698,6 +715,22 @@ def main():
 	# freeway dataset
 	
 	
+	
+	#train,test = freeway_preprocess("freeway_data/freeway_data2.csv",15)
+	#minitest = test[:96]
+	#print(minitest)
+	#trainX, trainY = freeway_dataset(train,n_steps)
+	#testX, testY =freeway_dataset(minitest,n_steps)
+
+	#model, history= nn_model(trainX,trainY,"cenas",n_steps,epochs)
+
+	#mape_approx, mae, mse,mape,loss = evaluate_model(trainX, model, 1,trainY)
+	#tmape_approx, tmae, tmse,tmape,tloss = evaluate_model(testX, model, 1,testY)
+
+	#print("Train Mape: ", mape)
+	#print("Test Mape: ", tmape)
+
+
 
 	#after all the tests are done load the lists and compute avg
 	# avg_train_mape_evo= []
@@ -720,8 +753,11 @@ def main():
 
 	#variation of loss with n_hidden layers
 	#loss_nlayers("freeway_data/freeway_data2.csv",600)
-	train, test = freeway_preprocess("freeway_data/freeway_data2.csv")
-	print(test[0])
+
+	#variation of pred horizon
+	#run_multi_aggregation("freeway_data/freeway_data2.csv",600,n_steps)
+
+	
 
 
 

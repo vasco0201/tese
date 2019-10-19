@@ -20,15 +20,20 @@ from os import listdir
 from os.path import isfile, join
 import os.path
 import pickle
+from matplotlib import rcParams
+rcParams.update({'figure.autolayout': True})
 import gc
+from sklearn.metrics import mean_squared_error
+
+from math import sqrt
 
 curr_dir = os.getcwd()
 
 def create_dataset(data):
     X,Y = [],[]
     for i in data:
-        X.append(i[:3])
-        Y.append(i[3])
+        X.append(i[:-1])
+        Y.append(i[-1])
     return np.array(X), np.array(Y)
 
 def get_data(ID_Espira):
@@ -78,7 +83,7 @@ def get_data(ID_Espira):
 	return train_df, test_df
 
 
-def smooth_data(train_cp,filename):
+def smooth_data_old(train_cp,filename):
     data = train_cp.iloc[:,0]
     print(len(data.values))
     train_cp = train_cp.drop(columns=[1])
@@ -125,6 +130,65 @@ def smooth_data(train_cp,filename):
     pd.DataFrame(test).to_csv("lstm/" + str(filename) + ".csv", sep=',', index=False)
     return test, train_cp
 
+def smooth_data(train_cp,filename):
+    data = train_cp.iloc[:,0]
+    data_np = data.values
+    #print(data.values)
+    train_cp = train_cp.drop(columns=[1])
+    train_cp = train_cp.values
+    #train_cp = train_cp.astype('float32')
+    avg_list = []
+    std_list = []
+    for i in range(len(train_cp[0])):
+        curr_avg = sum(train_cp[:,i])/len(train_cp[:,i])
+        avg_list.append(curr_avg)
+        std_list.append(statistics.stdev(train_cp[:,i]))
+    #FIX sera que e preciso guardar os valores antigos e usá-los para fazer os updates? 
+    #agora esta a fazer uma especie de moving average, utilizando os valores novos nos updates seguintes
+    #se tiver mais de 5 zeros seguidos como e que se faz
+    inicial_len= len(train_cp)
+    to_delete = []
+    consec_zeros=0
+    number_of_changes= 0
+    for row in range(len(train_cp)):
+    	n_zeros = np.count_nonzero(train_cp[row]==0.0)
+    	if n_zeros > 60:
+    		to_delete.append(row)
+    	for column in range(len(train_cp[0])):
+    		if (train_cp[row][column] > (avg_list[column] + 2*std_list[column])):
+    			old_value = train_cp[row][column]
+    			if column == 0:
+    				previous_t = train_cp[row,-1]
+    				next_t = train_cp[row,column+1]
+    				train_cp[row][column] = (previous_t + train_cp[row][column] + next_t)/3
+    				number_of_changes+=1
+    			if column == 95:
+    				previous_t = train_cp[row,column-1]
+    				next_t = train_cp[row,0]
+    				train_cp[row][column] = (previous_t + train_cp[row][column] + next_t)/3
+    				number_of_changes+=1
+    			else:
+    				previous_t = train_cp[row,column-1]
+    				next_t = train_cp[row,column+1]
+    				train_cp[row][column] = (previous_t + train_cp[row][column] + next_t)/3
+    				number_of_changes+=1
+    			new_value = train_cp[row][column]
+    			#	train_cp[row][column] = avg_list[column]
+    	#if n_zeros >= int(0.25*len(train_cp[0])):
+        	#delete this entry
+        #	to_delete.append(row)
+    #x = copy.deepcopy(train_cp)
+    
+    train_cp = np.delete(train_cp, to_delete, axis=0)
+    data_np = np.delete(data_np,to_delete,axis=0)
+    #print("Number of changes: " + str(number_of_changes))
+    #print("Number of times that there are 3 consecutive zeros:", consec_zeros)        
+    print("Numero de dias inuteis / total dias:", len(to_delete),"/",inicial_len)
+    new_d = data_np.reshape(len(data_np),1)
+    test = np.concatenate((new_d,train_cp),axis=1)
+    pd.DataFrame(test).to_csv("lstm/" + str(filename) + ".csv", sep=',', index=False)
+    return test, train_cp
+
 def transform_data(in_file, out_file, nrows=-1):
     in_file = open(str(in_file),"r")
     next(in_file)
@@ -153,6 +217,77 @@ def transform_data(in_file, out_file, nrows=-1):
     
     in_file.close()
     out_file.close()
+
+def transform_data2(in_file, out_file, time_lags=4):
+    in_file = open(str(in_file),"r")
+    next(in_file)
+    out_file = open(str(out_file),"w")
+    n=1
+    for lag in range(time_lags):
+    	if lag == time_lags-1:
+    		out_file.write("Y\n")
+    	else:
+    		out_file.write("t-"+str(time_lags-n)+",")
+    	n+=1
+    #out_file.write("t-3,t-2,t-1,Y\n") #header
+    k = 0    
+    lines = in_file.readlines()
+    for line in lines:
+        line = line.split(",")
+        line = line[1:]
+        line[-1] = line[-1].replace("\n","") #last data record has a \n
+        its = []
+        for lag in range(time_lags):
+        	if lag ==0:
+        		its = [iter(line)]
+        	else:
+        		its.append(iter(line[lag:]))
+
+       	#its = [iter(line), iter(line[1:]), iter(line[2:]),iter(line[3:])] #Construct the pattern for longer windowss
+        x = list(zip(*its))
+        k+=1
+
+        for i in x:
+        	for u in range(len(i)):
+        		if u == len(i)-1:
+        			out_file.write(i[u]+"\n")
+        		else:
+        			out_file.write(i[u]+",")
+    
+    in_file.close()
+    out_file.close()
+
+def aggregate_data(dataset,filename, interval):
+	new_data = []
+	for i in range(len(dataset)):
+		j = 1
+		temp=[]
+		if (int(interval) == 15):
+			
+			pd.DataFrame(dataset).to_csv("lstm/"+str(filename) + "_15.csv", sep=',', index=False)
+			return dataset
+
+		while (j < len(dataset[i][1:])):
+			if int(interval) == 30:
+				value = dataset[i][j]+dataset[i][j+1]
+				temp.append(value)
+				j+=2
+			elif int(interval) == 45:
+				value = dataset[i][j]+dataset[i][j+1]+ dataset[i][j+2]
+				temp.append(value)
+				j+=3
+			elif int(interval) == 60:
+				value = dataset[i][j]+dataset[i][j+1]+ dataset[i][j+2] + dataset[i][j+3]
+				temp.append(value)
+				j+=4
+			else: 
+				print("Invalid interval, using default : 15 min")
+				pd.DataFrame(dataset).to_csv("lstm/"+str(filename) + "_15.csv", sep=',', index=False)
+				return dataset
+		temp.insert(0,dataset[i][0])
+		new_data.append(temp)
+	new_data = np.asarray(new_data)
+	pd.DataFrame(new_data).to_csv("lstm/" + str(filename) + "_" + str(interval) + ".csv", sep=',', index=False)
 def get_nn_data(filename):
 	dataframe = pd.read_csv(str(filename))
 	dataset = dataframe.values
@@ -193,28 +328,42 @@ def evaluate_instance(filename, model,n_features):
 	print(model.metrics_names)
 	print("MAE:" ,score[2] ,"MSE: ", score[1])
 def evaluate_model(filename, model,n_features,flag=0, obsY="data"):
-	if flag==0:
-		obs_df = pd.read_csv(filename)
-		obs = obs_df.values
-		obs = obs.astype('float32')
-		obsX, obsY = create_dataset(obs)
-		obsX = obsX.reshape((obsX.shape[0], obsX.shape[1], n_features))
-		pred = model.predict(obsX)
-		mape = calc_mape(pred,obsY)
-		#print("MAPE: ",mape)
-		score = model.evaluate(obsX, obsY, verbose=0)
-		#print("MAE:" ,score[2] ,"MSE: ", score[1])
-		return score[2],score[1],score[3],mape
-		
-		#plot_results(pred, obsY, "teste",1)
-	else:
-		filename = filename.reshape((filename.shape[0], filename.shape[1], n_features))
-		pred = model.predict(filename)
-		mape = calc_mape(pred,obsY)
-		#print("MAPE: ",mape)
-		score = model.evaluate(filename, obsY, verbose=0)
-		#print("MAE:" ,score[2] ,"MSE: ", score[1])
-		return score[2],score[1],score[3],mape
+	filename = filename.reshape((filename.shape[0], filename.shape[1], n_features))
+	pred = model.predict(filename)
+	mape = []
+	rmse = []
+	mae = []
+	rmse_zeros = []
+	mae_zeros = []
+	n_zeros=0
+	for i in range(len(pred)):
+		if abs(obsY[i]) == 0:
+			err = abs(obsY[i]-pred[i])
+			mae_zeros.append(err)
+			rmse_temp = sqrt(err**2)
+			rmse_zeros.append(rmse_temp)
+			n_zeros+=1
+		else:
+			err = abs(obsY[i]-pred[i])
+			mape_temp = abs(obsY[i]-pred[i])/abs(obsY[i])
+			mae.append(err)
+			rmse_temp = sqrt(err**2)
+			rmse.append(rmse_temp)
+			mape.append(mape_temp)
+	
+	m_mape = (sum(mape)*100)/(len(mape))
+	m_mae  = sum(mae)/(len(mae))
+	m_rmse = sum(rmse)/(len(rmse))
+
+	m_mae_zeros = sum(mae_zeros)/(len(mae_zeros))
+	m_rmse_zeros = sum(rmse_zeros)/(len(rmse_zeros))
+	#print("MAPE: ", m_mape)
+
+	score = model.evaluate(filename, obsY, verbose=0)
+
+	#print("MAE:" ,score[2] ,"MSE: ", score[1])
+	rmse_total = sqrt(score[1])
+	return m_mape, m_mae, m_rmse, m_mae_zeros, m_rmse_zeros, score[0], rmse_total, score[2]
 
 
 # def mean_absolute_percentage_error(y_true, y_pred): 
@@ -478,8 +627,214 @@ def run_multi_aggregation(filename,epochs,n_steps,n_features):
 		pickle.dump(train_rmape_agg, fp)
 	with open("lstm_test_Rmape_multi_agg.txt", "wb") as fp:
 		pickle.dump(test_rmape_agg, fp)
+################################################################################
 
+
+
+#################################### URBAN DATA ################################
+def urban_mape_timelag(agg,epochs):
+	train_mape_evo = [[],[],[],[],[],[],[],[],[],[]]
+	test_mape_evo = [[],[],[],[],[],[],[],[],[],[]]
+
+	train_rmse_evo = [[],[],[],[],[],[],[],[],[],[]]
+	test_rmse_evo = [[],[],[],[],[],[],[],[],[],[]]
+	train_mape_file = open("/content/drive/My Drive/lstm_urban_train_mape_ts.txt", "wb")
+	train_mape_file.close()
+
+	for run in range(3):
+		i = 0
+		print("Run:", run+1,"/3")
+		for lag in range(2,12):
+			print("Lag:", lag-1, "/10")
+
+			transform_data2("lstm/train_"+str(agg)+".csv","lstm/train_formatted.csv",lag)
+			transform_data2("lstm/test_"+str(agg)+".csv","lstm/test_formatted.csv",lag)
+
+			trainX, trainY = get_nn_data('lstm/train_formatted.csv')
+			testX, testY = get_nn_data('lstm/test_formatted.csv')
+
+			model, history= lstm_model(trainX,trainY,1,lag-1,epochs) #Eventualmente dar a opcao de escolher os hiperparametros
+
+			mape, mae, rmse, mae_zeros, rmse_zeros, loss, rmse_total, mae_total  = evaluate_model(trainX, model, 1,1,trainY)
+			tmape, tmae, trmse, tmae_zeros, trmse_zeros, tloss, trmse_total, tmae_total  = evaluate_model(testX, model, 1, 1,testY)
+			train_mape_evo[i].append(mape)
+			test_mape_evo[i].append(tmape)
+
+			train_rmse_evo[i].append(rmse_total)
+			test_rmse_evo[i].append(trmse_total)
+			
+			print("Train:")
+			print("MAPE:", mape, "RMSE:", rmse_total, "MAE:", mae_total)
+
+			print("Test:")
+			print("MAPE:", tmape, "RMSE:", trmse_total, "MAE:", tmae_total)
+
+			i+=1
+		print("Saving progress...")
+		train_mape_file = open("/content/drive/My Drive/lstm_urban_train_mape_ts.txt", "wb")
+		test_mape_file = open("/content/drive/My Drive/lstm_urban_test_mape_ts.txt","wb")
+
+		train_rmse_file = open("/content/drive/My Drive/lstm_urban_train_rmse_ts.txt", "wb")
+		test_rmse_file = open("/content/drive/My Drive/lstm_urban_test_rmse_ts.txt", "wb")
 		
+		pickle.dump(train_mape_evo,train_mape_file)
+		pickle.dump(test_mape_evo,test_mape_file)
+
+		pickle.dump(train_rmse_evo,train_rmse_file)
+		pickle.dump(test_rmse_evo,test_rmse_file)
+		
+		train_mape_file.close()
+		test_mape_file.close()
+		train_rmse_file.close()
+		test_rmse_file.close()
+
+		print("Saved!")
+
+def urban_multi_agg(train,test,n_steps=5):
+	train_mape_file = open("/content/drive/My Drive/lstm_urban_train_mape_agg.txt", "wb")
+	train_mape_file.close()
+
+	train_mape_agg = [[],[],[],[]]
+	test_mape_agg = [[],[],[],[]]
+
+	train_rmse_agg = [[],[],[],[]]
+	test_rmse_agg = [[],[],[],[]]
+
+	train_mae_agg = [[],[],[],[]]
+	test_mae_agg = [[],[],[],[]]
+
+
+	train_rmse_zeros_agg = [[],[],[],[]]
+	test_rmse_zeros_agg = [[],[],[],[]]
+
+	train_mae_zeros_agg = [[],[],[],[]]
+	test_mae_zeros_agg = [[],[],[],[]]
+
+	train_rmse_total_agg = [[],[],[],[]]
+	test_rmse_total_agg = [[],[],[],[]]
+
+	train_mae_total_agg = [[],[],[],[]]
+	test_mae_total_agg = [[],[],[],[]]
+
+
+	for run in range(3):
+		print("Run nr:", run+1,"/3")
+		i=0
+		for interval in [15,30,45,60]:
+			print("Agg:", interval)
+			aggregate_data(train,"train", interval)
+			aggregate_data(test,"test",interval)
+
+			transform_data2("lstm/train_"+str(interval)+".csv","lstm/train_formatted.csv",n_steps)
+			transform_data2("lstm/test_"+str(interval)+".csv","lstm/test_formatted.csv",n_steps)
+
+			trainX, trainY = get_nn_data('lstm/train_formatted.csv')
+			testX, testY = get_nn_data('lstm/test_formatted.csv')
+			
+			model, history= lstm_model(trainX,trainY,1,n_steps-1,epochs) #Eventualmente dar a opcao de escolher os hiperparametros
+		
+			mape, mae, rmse, mae_zeros, rmse_zeros, loss, rmse_total, mae_total  = evaluate_model(trainX, model, 1,1,trainY)
+			tmape, tmae, trmse, tmae_zeros, trmse_zeros, tloss, trmse_total, tmae_total  = evaluate_model(testX, model, 1, 1,testY)
+			
+			### Metrics for obs != 0
+			train_mape_agg[i].append(mape)
+			test_mape_agg[i].append(tmape)
+
+			train_rmse_agg[i].append(rmse)
+			test_rmse_agg[i].append(trmse)
+
+			train_mae_agg[i].append(mae)
+			test_mae_agg[i].append(tmae)
+
+			### Metrics for obs = 0
+			train_rmse_zeros_agg[i].append(rmse_zeros)
+			test_rmse_zeros_agg[i].append(trmse_zeros)
+
+			train_mae_zeros_agg[i].append(mae_zeros)
+			test_mae_zeros_agg[i].append(tmae_zeros)
+
+			### Metrics for all obs
+			train_rmse_total_agg[i].append(rmse_total)
+			test_rmse_total_agg[i].append(trmse_total)
+
+			train_mae_total_agg[i].append(mae_total)
+			test_mae_total_agg[i].append(tmae_total)
+
+			print("Train:")
+			print("MAPE:", mape, "RMSE:", rmse)
+
+			print("Test:")
+			print("MAPE:", tmape, "RMSE:", trmse)
+			i+=1
+		print("Saving progress...")
+
+		train_mape_file = open("/content/drive/My Drive/lstm_urban_train_mape_agg.txt", "wb")
+		test_mape_file = open("/content/drive/My Drive/lstm_urban_test_mape_agg.txt", "wb")
+
+		train_rmse_file = open("/content/drive/My Drive/lstm_urban_train_rmse_agg.txt", "wb")
+		test_rmse_file = open("/content/drive/My Drive/lstm_urban_test_rmse_agg.txt", "wb")
+
+		train_mae_file = open("/content/drive/My Drive/lstm_urban_train_mae_agg.txt", "wb")
+		test_mae_file =	open("/content/drive/My Drive/lstm_urban_test_mae_agg.txt", "wb")
+
+		train_rmse_zeros_file  = open("/content/drive/My Drive/lstm_urban_train_rmseWzeros_agg.txt", "wb")
+		test_rmse_zeros_file = open("/content/drive/My Drive/lstm_urban_test_rmseWzeros_agg.txt", "wb")
+		
+		train_mae_zeros_file = open("/content/drive/My Drive/lstm_urban_train_maeWzeros_agg.txt", "wb")
+		test_mae_zeros_file = open("/content/drive/My Drive/lstm_urban_test_maeWzeros_agg.txt", "wb")
+		
+		train_rmse_total_file = open("/content/drive/My Drive/lstm_urban_train_rmsetotal_agg.txt", "wb")
+		test_rmse_total_file = open("/content/drive/My Drive/lstm_urban_test_rmsetotal_agg.txt", "wb")
+
+		train_mae_total_file = open("/content/drive/My Drive/lstm_urban_train_maetotal_agg.txt", "wb")
+		test_mae_total_file = open("/content/drive/My Drive/lstm_urban_test_maetotal_agg.txt", "wb")
+		
+		pickle.dump(train_mape_agg,train_mape_file)
+		pickle.dump(test_mape_agg,test_mape_file)
+
+		pickle.dump(train_rmse_agg,train_rmse_file)
+		pickle.dump(test_rmse_agg,test_rmse_file)
+
+		pickle.dump(train_mae_agg,train_mae_file)
+		pickle.dump(test_mae_agg,test_mae_file)
+
+		pickle.dump(train_rmse_zeros_agg,train_rmse_zeros_file)
+		pickle.dump(test_rmse_zeros_agg,test_rmse_zeros_file)
+
+		pickle.dump(train_mae_zeros_agg,train_mae_zeros_file)
+		pickle.dump(test_mae_zeros_agg,test_mae_zeros_file)
+
+		pickle.dump(train_rmse_total_agg,train_rmse_total_file)
+		pickle.dump(test_rmse_total_agg,test_rmse_total_file)
+
+		pickle.dump(train_mae_total_agg,train_mae_total_file)
+		pickle.dump(test_mae_total_agg,test_mae_total_file)
+
+
+
+		train_mape_file.close()
+		test_mape_file.close()
+		train_rmse_file.close()
+		test_rmse_file.close()
+		train_mae_file.close()
+		test_mae_file.close()
+		train_rmse_zeros_file.close()
+		test_rmse_zeros_file.close()
+		train_mae_zeros_file.close()
+		test_mae_zeros_file.close()
+		train_rmse_total_file.close()
+		test_rmse_total_file.close()
+		train_mae_total_file.close()
+		test_mae_total_file.close()
+
+		print("Saved!")
+
+
+
+
+
+
+################################################################################
 
 
 
@@ -506,12 +861,13 @@ def run_lstm(f_trainX,f_trainY,n_features,n_steps,epochs):
 
 def main():
 	n_features = 1
-	n_steps = 5
+	n_steps = 3
 	epochs = 50
 	
 	#x = input("1 - Espiras; 2 - Autoestradas :")
-	x=2
+	x=1
 	if x and int(x)==1:
+		n_steps=4
 		ID_Espira = "4_ct4"
 		train_set, test_set = get_data(ID_Espira)
 
@@ -521,31 +877,46 @@ def main():
 		smooth_train, df_train= smooth_data(train_cp, "train_2")
 		smooth_test, df_test = smooth_data(test_cp, "test_2")
 
-		transform_data("lstm/train_2.csv","lstm/train_formatted.csv")	
-		transform_data("lstm/test_2.csv","lstm/test_formatted.csv")
 
-		f_trainX, f_trainY = get_nn_data('lstm/train_formatted.csv')
-		f_testX, f_testY = get_nn_data('lstm/test_formatted.csv')
+		#transform_data("lstm/train_2.csv","lstm/train_formatted.csv")	
+		#transform_data("lstm/test_2.csv","lstm/test_formatted.csv")
+		interval=15
+		aggregate_data(smooth_train,"train", interval)
+		aggregate_data(smooth_test,"test",interval)
+
+		#transform_data2("lstm/train_"+str(interval)+".csv","lstm/train_formatted.csv",n_steps+1)
+		#transform_data2("lstm/test_"+str(interval)+".csv","lstm/test_formatted.csv",n_steps+1)
+
+		#f_trainX, f_trainY = get_nn_data('lstm/train_formatted.csv')
+		#f_testX, f_testY = get_nn_data('lstm/test_formatted.csv')
 
 
-		model, history = lstm_model(f_trainX,f_trainY,n_features,n_steps,epochs)
-		n_layers  = len(model.layers)-1
-		n_units = []
-		for i in model.layers:
-			if "lstm" in i.get_config()['name']:
-				n_units.append(i.get_config()['units'])
+		#model, history = lstm_model(f_trainX,f_trainY,n_features,n_steps,epochs)
 
-			#evaluate_model("lstm/train_formatted.csv", model,n_features)
-			#evaluate_model("lstm/test_formatted.csv", model,n_features)
-			mae,rmse,mape,mape_approx= evaluate_model(f_trainX,model,n_features,1,f_trainY)
-			tmae,trmse,tmape,tmape_approx = evaluate_model(f_testX,model,n_features,1,f_testY)
-			if not (os.path.exists("lstm_loopsensor_results.csv")):
-				out_file =  csv.writer(open("lstm_loopsensor_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
-				header =["Espira","nr_past_ts","epochs","hidden_layers","n_units","mae","rmse","mape","test_mae", "test_rmse", "test_mape"]
-				out_file.writerow(header)
-			else:
-				out_file =  csv.writer(open("lstm_loopsensor_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
-			out_file.writerow([ID_Espira, n_steps, epochs, n_layers, n_units, mae, rmse, mape_approx, tmae, trmse, tmape_approx])
+		##### TEST RUNS ######
+
+		# time lag variation
+		#urban_mape_timelag(15,40)
+		# aggregation test(train, test, n_prev steps + 1)
+		urban_multi_agg(smooth_train,smooth_test,9)
+
+		# n_layers  = len(model.layers)-1
+		# n_units = []
+		# for i in model.layers:
+		# 	if "lstm" in i.get_config()['name']:
+		# 		n_units.append(i.get_config()['units'])
+
+		# 	#evaluate_model("lstm/train_formatted.csv", model,n_features)
+		# 	#evaluate_model("lstm/test_formatted.csv", model,n_features)
+		# 	mae,rmse,mape,mape_approx= evaluate_model(f_trainX,model,n_features,1,f_trainY)
+		# 	tmae,trmse,tmape,tmape_approx = evaluate_model(f_testX,model,n_features,1,f_testY)
+		# 	if not (os.path.exists("lstm_loopsensor_results.csv")):
+		# 		out_file =  csv.writer(open("lstm_urban_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
+		# 		header =["Espira","nr_past_ts","epochs","hidden_layers","n_units","mae","rmse","mape","test_mae", "test_rmse", "test_mape"]
+		# 		out_file.writerow(header)
+		# 	else:
+		# 		out_file =  csv.writer(open("lstm_urban_results.csv","a+", newline=''), delimiter=',',quoting=csv.QUOTE_ALL)
+		# 	out_file.writerow([ID_Espira, n_steps, epochs, n_layers, n_units, mae, rmse, mape_approx, tmae, trmse, tmape_approx])
 
 	else: ################## freeway dataset ##########################
 		#### Include data from the previous day at the same time bus_day =1

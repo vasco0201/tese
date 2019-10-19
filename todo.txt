@@ -1,6 +1,11 @@
 Dúvidas:
-
--> falar ao professor sobre o capitulo do arima (as 2 maneiras de testar) e o facto de o erro ser tão baixo
+-> escolher o tamanho do train set no arima para as espiras pa mete o primeiro ano das espiras pq aí havia menos sensores a funcionar mal e cenas
+-> correr o arima e escrever os resultados
+-> correr a lstm
+-> se tiver tempo depois de escrever, correr as redes para os dados iniciais,que são mais regulares
+-> 4_6 + uma
+-> os dados para o arima das espiras já tao prontos basta escolher o intervalo que vou utilizar
+-> 
 -> utilizar outro método que não a agregação dos dados para prever com + time steps
 -> preciso de fazer um plot com todos para demonstrar a diferença de performance
 -> tamanho do train set é muito menor no arima porque demora anos a compilar se for igual ao da nnr

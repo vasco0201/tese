@@ -428,7 +428,7 @@ def nn_model(trainX,trainY,params,dim_input,n_epochs=200):
 	model.compile(loss='mean_squared_error', optimizer=adam,metrics=['mse','mae','mape'])
 	patience= int(round(n_epochs/3))
 	es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=patience)
-	history= model.fit(trainX, trainY, epochs=n_epochs, verbose=2, batch_size=64,validation_split=0.2, callbacks=[es])
+	history= model.fit(trainX, trainY, epochs=n_epochs, verbose=0, batch_size=64,validation_split=0.2, callbacks=[es])
 	
 	return model,history
 
@@ -476,66 +476,29 @@ def model_results(trainX, trainY, testX, testY,model):
 	    f.write("Test Set metrics :"  + str(testScore) +"\n\n\n")
 	    f.close()
 def evaluate_model(filename, model,flag=0, obsY="data"):
-	if flag==0:
-		obs_df = pd.read_csv(filename)
-		obs = obs_df.values
-		obs = obs.astype('float32')
-		obsX, obsY = create_dataset(obs)
-		pred = model.predict(obsX)
-		mape = []
-		for i in range(len(pred)):
-			if abs(obsY[i]) < 0.7 :
-				err = abs((pred[i]+1)-(obsY[i]+1))/abs(obsY[i]+1)
-			else:
-				err = abs((pred[i])-(obsY[i]))/abs(obsY[i])
-			if err > 1000:
-				print(err)
-				print("loool")
-				break
-			mape.append(err)
-		m_mape= sum(mape)*100/(len(mape))
-		#print("MAPE: ", m_mape)
+	to_delete=[]
+	for i in range(len(obsY)):
+		if obsY[i] == 0:
+			to_delete.append(i)
 
-		score = model.evaluate(obsX, obsY, verbose=0)
-		#print("MAE:" ,score[2] ,"MSE: ", score[1])
-		#plot_results(pred, obsY, "teste",1)
-		return m_mape, score[2], score[1],score[3],score[0]
+	obs_withoutZero = np.delete(obsY,to_delete, axis=0)
+	filename_without_zero = np.delete(filename,to_delete,axis=0)
+
+	obs_onlyZero = obsY[to_delete]
+	filename_only_zero = filename[to_delete]
+	
+	score = model.evaluate(filename, obsY, verbose=0)
+	rmse_total = sqrt(score[1])
+	if len(filename_only_zero) != 0:
+		score_no_zeros = model.evaluate(filename_without_zero, obs_withoutZero, verbose=0)
+		score_of_zeros = model.evaluate(filename_only_zero, obs_onlyZero, verbose=0)
+		return score_no_zeros[3], score_no_zeros[2], sqrt(score_no_zeros[1]), score_of_zeros[2], sqrt(score_of_zeros[1]), score[0], rmse_total, score[2]
 	else:
-		pred = model.predict(filename)
-		mape = []
-		rmse = []
-		mae = []
-		rmse_zeros = []
-		mae_zeros = []
-		n_zeros=0
-		for i in range(len(pred)):
-			if abs(obsY[i]) == 0:
-				err = abs(obsY[i]-pred[i])
-				mae_zeros.append(err)
-				rmse_temp = sqrt(err**2)
-				rmse_zeros.append(rmse_temp)
-				n_zeros+=1
-			else:
-				err = abs(obsY[i]-pred[i])
-				mape_temp = abs(obsY[i]-pred[i])/abs(obsY[i])
-				mae.append(err)
-				rmse_temp = sqrt(err**2)
-				rmse.append(rmse_temp)
-				mape.append(mape_temp)
-		
-		m_mape = (sum(mape)*100)/(len(mape))
-		m_mae  = sum(mae)/(len(mae))
-		m_rmse = sum(rmse)/(len(rmse))
+		return score[3], 1, 1, 1, 1, score[0], rmse_total, score[2]
+	#print("Calculated through model evaluate")
+	#print("RMSE:",sqrt(scoreWithoutzeros[1]), "MAE:", scoreWithoutzeros[2], "MAPE:", scoreWithoutzeros[3])
 
-		m_mae_zeros = sum(mae_zeros)/(len(mae_zeros))
-		m_rmse_zeros = sum(rmse_zeros)/(len(rmse_zeros))
-		#print("MAPE: ", m_mape)
-
-		score = model.evaluate(filename, obsY, verbose=0)
-
-		#print("MAE:" ,score[2] ,"MSE: ", score[1])
-		rmse_total = sqrt(score[1])
-		return m_mape, m_mae, m_rmse, m_mae_zeros, m_rmse_zeros, score[0], rmse_total, score[2]
+	#print("MAE:" ,score[2] ,"MSE: ", score[1])
 
 
 ################## FREEWAY DATA ########################
@@ -678,12 +641,31 @@ def run_multi_aggregation(filename,epochs,n_steps):
 	#g = open("test_lstm_mape_multi_aggregation.csv","a+")
 	#g.write("15,30,45,60\n")
 	
+	train_mape_file = open("/content/drive/My Drive/freeway/freeway_train_mape_agg.txt", "wb")
+
 
 	train_mape_agg = [[],[],[],[]]
 	test_mape_agg = [[],[],[],[]]
 
-	train_rmape_agg = [[],[],[],[]]
-	test_rmape_agg = [[],[],[],[]]
+	train_rmse_agg = [[],[],[],[]]
+	test_rmse_agg = [[],[],[],[]]
+
+	train_mae_agg = [[],[],[],[]]
+	test_mae_agg = [[],[],[],[]]
+
+
+	train_rmse_zeros_agg = [[],[],[],[]]
+	test_rmse_zeros_agg = [[],[],[],[]]
+
+	train_mae_zeros_agg = [[],[],[],[]]
+	test_mae_zeros_agg = [[],[],[],[]]
+
+	train_rmse_total_agg = [[],[],[],[]]
+	test_rmse_total_agg = [[],[],[],[]]
+
+	train_mae_total_agg = [[],[],[],[]]
+	test_mae_total_agg = [[],[],[],[]]
+
 	#h = open("lstm_mape_multi_aggregation.csv","a+")
 	#h.write("15,30,45,60\n")
 	for run in range(5):
@@ -696,29 +678,98 @@ def run_multi_aggregation(filename,epochs,n_steps):
 			testX, testY =freeway_dataset(test,n_steps)
 
 			model, history= nn_model(trainX,trainY,"cenas",n_steps,epochs)
-			mape_approx, mae, mse,mape,loss = evaluate_model(trainX, model, 1,trainY)
-			tmape_approx, tmae, tmse,tmape,tloss = evaluate_model(testX, model, 1,testY)
-			
-			train_mape_agg[i].append(mape_approx)
-			test_mape_agg[i].append(tmape_approx)
+			mape, mae, rmse, mae_zeros, rmse_zeros, loss, rmse_total, mae_total = evaluate_model(trainX, model, 1,trainY)
+			tmape, tmae, trmse, tmae_zeros, trmse_zeros, tloss, trmse_total, tmae_total = evaluate_model(testX, model, 1,testY)
 
+			train_mape_agg[i].append(mape)
+			test_mape_agg[i].append(tmape)
 
-			train_rmape_agg[i].append(mape)
-			test_rmape_agg[i].append(tmape)
+			train_rmse_agg[i].append(rmse)
+			test_rmse_agg[i].append(trmse)
+
+			train_mae_agg[i].append(mae)
+			test_mae_agg[i].append(tmae)
+
+			### Metrics for obs = 0
+			train_rmse_zeros_agg[i].append(rmse_zeros)
+			test_rmse_zeros_agg[i].append(trmse_zeros)
+
+			train_mae_zeros_agg[i].append(mae_zeros)
+			test_mae_zeros_agg[i].append(tmae_zeros)
+
+			### Metrics for all obs
+			train_rmse_total_agg[i].append(rmse_total)
+			test_rmse_total_agg[i].append(trmse_total)
+
+			train_mae_total_agg[i].append(mae_total)
+			test_mae_total_agg[i].append(tmae_total)
+
 			i+=1
 
-	with open("train_mape_multi_agg.txt", "wb") as fp:
- 		pickle.dump(train_mape_agg, fp)
-	with open("test_mape_multi_agg.txt", "wb") as fp:
- 		pickle.dump(test_mape_agg, fp)
-	
-	with open("train_Rmape_multi_agg.txt", "wb") as fp:
-		pickle.dump(train_rmape_agg, fp)
-	with open("test_Rmape_multi_agg.txt", "wb") as fp:
-		pickle.dump(test_rmape_agg, fp)
+		print("Saving progress...")
+
+		train_mape_file = open("/content/drive/My Drive/freeway/freeway_train_mape_agg.txt", "wb")
+		test_mape_file = open("/content/drive/My Drive/freeway/freeway_test_mape_agg.txt", "wb")
+
+		train_rmse_file = open("/content/drive/My Drive/freeway/freeway_train_rmse_agg.txt", "wb")
+		test_rmse_file = open("/content/drive/My Drive/freeway/freeway_test_rmse_agg.txt", "wb")
+
+		train_mae_file = open("/content/drive/My Drive/freeway/freeway_train_mae_agg.txt", "wb")
+		test_mae_file =	open("/content/drive/My Drive/freeway/freeway_test_mae_agg.txt", "wb")
+
+		train_rmse_zeros_file  = open("/content/drive/My Drive/freeway/freeway_train_rmseWzeros_agg.txt", "wb")
+		test_rmse_zeros_file = open("/content/drive/My Drive/freeway/freeway_test_rmseWzeros_agg.txt", "wb")
+		
+		train_mae_zeros_file = open("/content/drive/My Drive/freeway/freeway_train_maeWzeros_agg.txt", "wb")
+		test_mae_zeros_file = open("/content/drive/My Drive/freeway/freeway_test_maeWzeros_agg.txt", "wb")
+		
+		train_rmse_total_file = open("/content/drive/My Drive/freeway/freeway_train_rmsetotal_agg.txt", "wb")
+		test_rmse_total_file = open("/content/drive/My Drive/freeway/freeway_test_rmsetotal_agg.txt", "wb")
+
+		train_mae_total_file = open("/content/drive/My Drive/freeway/freeway_train_maetotal_agg.txt", "wb")
+		test_mae_total_file = open("/content/drive/My Drive/freeway/freeway_test_maetotal_agg.txt", "wb")
+		
+		pickle.dump(train_mape_agg,train_mape_file)
+		pickle.dump(test_mape_agg,test_mape_file)
+
+		pickle.dump(train_rmse_agg,train_rmse_file)
+		pickle.dump(test_rmse_agg,test_rmse_file)
+
+		pickle.dump(train_mae_agg,train_mae_file)
+		pickle.dump(test_mae_agg,test_mae_file)
+
+		pickle.dump(train_rmse_zeros_agg,train_rmse_zeros_file)
+		pickle.dump(test_rmse_zeros_agg,test_rmse_zeros_file)
+
+		pickle.dump(train_mae_zeros_agg,train_mae_zeros_file)
+		pickle.dump(test_mae_zeros_agg,test_mae_zeros_file)
+
+		pickle.dump(train_rmse_total_agg,train_rmse_total_file)
+		pickle.dump(test_rmse_total_agg,test_rmse_total_file)
+
+		pickle.dump(train_mae_total_agg,train_mae_total_file)
+		pickle.dump(test_mae_total_agg,test_mae_total_file)
+
+
+
+		train_mape_file.close()
+		test_mape_file.close()
+		train_rmse_file.close()
+		test_rmse_file.close()
+		train_mae_file.close()
+		test_mae_file.close()
+		train_rmse_zeros_file.close()
+		test_rmse_zeros_file.close()
+		train_mae_zeros_file.close()
+		test_mae_zeros_file.close()
+		train_rmse_total_file.close()
+		test_rmse_total_file.close()
+		train_mae_total_file.close()
+		test_mae_total_file.close()
 
 def urban_multi_agg(train,test,n_steps=5):
-	train_mape_file = open("/content/drive/My Drive/urban_train_mape_agg.txt", "wb")
+	
+	train_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_mape_agg.txt", "wb")
 	train_mape_file.close()
 
 	train_mape_agg = [[],[],[],[]]
@@ -744,7 +795,7 @@ def urban_multi_agg(train,test,n_steps=5):
 	test_mae_total_agg = [[],[],[],[]]
 
 
-	for run in range(3):
+	for run in range(4):
 		print("Run nr:", run+1,"/3")
 		i=0
 		for interval in [15,30,45,60]:
@@ -787,33 +838,37 @@ def urban_multi_agg(train,test,n_steps=5):
 			test_mae_total_agg[i].append(tmae_total)
 
 			print("Train:")
-			print("MAPE:", mape, "RMSE:", rmse)
-
+			print("MAPE:", mape, "RMSE:", rmse_total, "MAE:", mae_total)
+			print("OBS = 0","MAPE:", "-", "RMSE:", rmse_zeros, "MAE:", mae_zeros)
+			print("OBS != 0","MAPE:", mape, "RMSE:", rmse, "MAE:", mae)
+			
 			print("Test:")
-			print("MAPE:", tmape, "RMSE:", trmse)
+			print("MAPE:", tmape, "RMSE:", trmse_total, "MAE:", tmae_total)
+			print("OBS = 0","MAPE:", "-", "RMSE:", trmse_zeros, "MAE:", tmae_zeros)
+			print("OBS != 0","MAPE:", tmape, "RMSE:", trmse, "MAE:", tmae)
 			i+=1
 		print("Saving progress...")
 
-		train_mape_file = open("/test3/urban_train_mape_agg.txt", "wb")
-		test_mape_file = open("/test3/urban_test_mape_agg.txt", "wb")
+		train_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_mape_agg.txt", "wb")
+		test_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_mape_agg.txt", "wb")
 
-		train_rmse_file = open("/test3/urban_train_rmse_agg.txt", "wb")
-		test_rmse_file = open("/test3/urban_test_rmse_agg.txt", "wb")
+		train_rmse_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_rmse_agg.txt", "wb")
+		test_rmse_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_rmse_agg.txt", "wb")
 
-		train_mae_file = open("/test3/urban_train_mae_agg.txt", "wb")
-		test_mae_file =	open("/test3/urban_test_mae_agg.txt", "wb")
+		train_mae_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_mae_agg.txt", "wb")
+		test_mae_file =	open("/content/drive/My Drive/4_ct6/agg_test/urban_test_mae_agg.txt", "wb")
 
-		train_rmse_zeros_file  = open("/test3/urban_train_rmseWzeros_agg.txt", "wb")
-		test_rmse_zeros_file = open("/test3/urban_test_rmseWzeros_agg.txt", "wb")
+		train_rmse_zeros_file  = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_rmseWzeros_agg.txt", "wb")
+		test_rmse_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_rmseWzeros_agg.txt", "wb")
 		
-		train_mae_zeros_file = open("/test3/urban_train_maeWzeros_agg.txt", "wb")
-		test_mae_zeros_file = open("/test3/urban_test_maeWzeros_agg.txt", "wb")
+		train_mae_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_maeWzeros_agg.txt", "wb")
+		test_mae_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_maeWzeros_agg.txt", "wb")
 		
-		train_rmse_total_file = open("/test3/urban_train_rmsetotal_agg.txt", "wb")
-		test_rmse_total_file = open("/test3/urban_test_rmsetotal_agg.txt", "wb")
+		train_rmse_total_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_rmsetotal_agg.txt", "wb")
+		test_rmse_total_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_rmsetotal_agg.txt", "wb")
 
-		train_mae_total_file = open("/test3/urban_train_maetotal_agg.txt", "wb")
-		test_mae_total_file = open("/test3/urban_test_maetotal_agg.txt", "wb")
+		train_mae_total_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_maetotal_agg.txt", "wb")
+		test_mae_total_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_maetotal_agg.txt", "wb")
 		
 		pickle.dump(train_mape_agg,train_mape_file)
 		pickle.dump(test_mape_agg,test_mape_file)
@@ -862,9 +917,13 @@ def urban_mape_timelag(agg):
 
 	train_rmse_evo = [[],[],[],[],[],[],[],[],[],[]]
 	test_rmse_evo = [[],[],[],[],[],[],[],[],[],[]]
-	train_mape_file = open("/content/drive/My Drive/urban_train_mape_ts.txt", "wb")
-	train_mape_file.close()
 
+
+	train_mae_evo = [[],[],[],[],[],[],[],[],[],[]]
+	test_mae_evo = [[],[],[],[],[],[],[],[],[],[]]
+
+	train_mape_file = open("/content/drive/My Drive/4_ct6/ts_test/urban_train_mape_ts.txt", "wb")
+	train_mape_file.close()
 	for run in range(3):
 		i = 0
 		print("Run:", run+1,"/3")
@@ -884,20 +943,30 @@ def urban_mape_timelag(agg):
 
 			train_rmse_evo[i].append(rmse_total)
 			test_rmse_evo[i].append(trmse_total)
-			
+
+			train_mae_evo[i].append(mae_total)
+			test_mae_evo[i].append(tmae_total)
+
 			print("Train:")
 			print("MAPE:", mape, "RMSE:", rmse_total, "MAE:", mae_total)
+			print("OBS = 0","MAPE:", "-", "RMSE:", rmse_zeros, "MAE:", mae_zeros)
+			print("OBS != 0","MAPE:", mape, "RMSE:", rmse, "MAE:", mae)
 
 			print("Test:")
 			print("MAPE:", tmape, "RMSE:", trmse_total, "MAE:", tmae_total)
+			print("OBS = 0","MAPE:", "-", "RMSE:", trmse_zeros, "MAE:", tmae_zeros)
+			print("OBS != 0","MAPE:", tmape, "RMSE:", trmse, "MAE:", tmae)
 
 			i+=1
 		print("Saving progress...")
-		#train_mape_file = open("/content/drive/My Drive/urban_train_mape_ts.txt", "wb")
-		#test_mape_file = open("/content/drive/My Drive/urban_test_mape_ts.txt", "wb")
+		train_mape_file = open("/content/drive/My Drive/4_ct6/ts_test/urban_train_mape_ts.txt", "wb")
+		test_mape_file = open("/content/drive/My Drive/4_ct6/ts_test/urban_test_mape_ts.txt", "wb")
 
-		train_rmse_file = open("/content/drive/My Drive/urban_train_rmse_ts.txt", "wb")
-		test_rmse_file = open("/content/drive/My Drive/urban_test_rmse_ts.txt", "wb")
+		train_rmse_file = open("/content/drive/My Drive/4_ct6/ts_test/urban_train_rmse_ts.txt", "wb")
+		test_rmse_file = open("/content/drive/My Drive/4_ct6/ts_test/urban_test_rmse_ts.txt", "wb")
+
+		train_mae_file = open("/content/drive/My Drive/4_ct6/ts_test/urban_train_mae_ts.txt", "wb")
+		test_mae_file = open("/content/drive/My Drive/4_ct6/ts_test/urban_test_mae_ts.txt", "wb")
 		
 		pickle.dump(train_mape_evo,train_mape_file)
 		pickle.dump(test_mape_evo,test_mape_file)
@@ -905,6 +974,9 @@ def urban_mape_timelag(agg):
 		pickle.dump(train_rmse_evo,train_rmse_file)
 		pickle.dump(test_rmse_evo,test_rmse_file)
 		
+		pickle.dump(train_mae_evo,train_mae_file)
+		pickle.dump(test_mae_evo,test_mae_file)
+
 		train_mape_file.close()
 		test_mape_file.close()
 		train_rmse_file.close()
@@ -923,38 +995,43 @@ def urban_mape_timelag(agg):
 def main():
 	n_steps=4
 	epochs=600
-	# #ID_Espira = input("Coloque id da espira: ")
-	# ID_Espira = "4_ct4"
-	# ID_Espira2 = "4_ct6"
-	# test_date = np.datetime64('2018-08-27')
-	# train_set, test_set = get_data(ID_Espira,0, test_date)
-	# #dt2, train_set, test_set, dataset = get_data(ID_Espira)
-	# train_cp = copy.deepcopy(train_set)
-	# test_cp = copy.deepcopy(test_set)
+	#ID_Espira = input("Coloque id da espira: ")
+	#ID_Espira = "4_ct4"
+	ID_Espira = "4_ct6"
+	test_date = np.datetime64('2018-08-27')
+	train_set, test_set = get_data(ID_Espira,0, test_date)
+	#dt2, train_set, test_set, dataset = get_data(ID_Espira)
+	train_cp = copy.deepcopy(train_set)
+	test_cp = copy.deepcopy(test_set)
 
 	
-	# #smoothing both sets_
-	# smooth_train, df_train= smooth_data(train_cp, "train_2")
-	# smooth_test, df_test = smooth_data(test_cp, "test_2")
-	# #interval = input("Escolha o horizonte de predicao (15,30,45 ou 60): ")
-	# #if not interval:
-	# interval = 15
+	#smoothing both sets_
+	smooth_train, df_train= smooth_data(train_cp, "train_2")
+	smooth_test, df_test = smooth_data(test_cp, "test_2")
+	#interval = input("Escolha o horizonte de predicao (15,30,45 ou 60): ")
+	#if not interval:
+	interval = 15
 	
-	# smooth_train = pd.read_csv("train_2.csv")
-	# smooth_train = smooth_train.values
+	smooth_train = pd.read_csv("train_2.csv")
+	smooth_train = smooth_train.values
 
 
-	# smooth_test = pd.read_csv("test_2.csv")
-	# smooth_test = smooth_test.values
+	smooth_test = pd.read_csv("test_2.csv")
+	smooth_test = smooth_test.values
 
-	# aggregate_data(smooth_train,"train", interval)
-	# aggregate_data(smooth_test,"test",interval)
+	aggregate_data(smooth_train,"train", interval)
+	aggregate_data(smooth_test,"test",interval)
 
 
 
 	#transform_data("train_"+str(interval)+".csv","train_formatted.csv")
 	#transform_data("test_"+str(interval)+".csv","test_formatted.csv")
 
+	#mape_with varying time lag size
+	#urban_mape_timelag(interval)
+
+	# #mape with varying prediction
+	urban_multi_agg(smooth_train,smooth_test,5)
 
 	# transform_data2("train_"+str(interval)+".csv","train_formatted.csv",5)
 	# transform_data2("test_"+str(interval)+".csv","test_formatted.csv",5)
@@ -981,11 +1058,6 @@ def main():
 	#print(trmape)
 	# # plot_loss(history,15)
 
-	#mape_with varying time lag size
-	#urban_mape_timelag(interval)
-
-	# #mape with varying prediction
-	#urban_multi_agg(smooth_train,smooth_test,5)
 
 
 	# avg_train_mape_evo= []
@@ -1034,30 +1106,31 @@ def main():
 		
 
 	###############################################################
-	# freeway dataset
-	print("Tou no sitio certo")
-	n_steps = 5
-	train,test = freeway_preprocess("4_ct4_timeseries2013.csv",15)
-	#minitest = test[:96]
-	#print(minitest)
-	trainX, trainY = freeway_dataset(train,n_steps)
-	testX, testY =freeway_dataset(test,n_steps)
+	#freeway dataset
+	# print("Tou no sitio certo")
+	# n_steps = 5
+	# train,test = freeway_preprocess("4_ct4_timeseries2013.csv",15)
+	# "freeway_data/freeway_data2.csv"
+	# #minitest = test[:96]
+	# #print(minitest)
+	# trainX, trainY = freeway_dataset(train,n_steps)
+	# testX, testY =freeway_dataset(test,n_steps)
 
-	model, history= nn_model(trainX,trainY,"cenas",n_steps,epochs)
+	# model, history= nn_model(trainX,trainY,"cenas",n_steps,epochs)
 
-	mape, mae, rmse, mae_zeros, rmse_zeros, loss, rmse_total, mae_total = evaluate_model(trainX, model, 1,trainY)
-	tmape, tmae, trmse, tmae_zeros, trmse_zeros, tloss, trmse_total, tmae_total  = evaluate_model(testX, model, 1,testY)
+	# mape, mae, rmse, mae_zeros, rmse_zeros, loss, rmse_total, mae_total = evaluate_model(trainX, model, 1,trainY)
+	# tmape, tmae, trmse, tmae_zeros, trmse_zeros, tloss, trmse_total, tmae_total  = evaluate_model(testX, model, 1,testY)
 
-	#tmape_approx, tmae, tmse,tmape,tloss = evaluate_model(testX, model, 1,testY)
+	# #tmape_approx, tmae, tmse,tmape,tloss = evaluate_model(testX, model, 1,testY)
 
-	#print("Train Mape: ", mape)
-	#print("Test Mape: ", tmape)
+	# #print("Train Mape: ", mape)
+	# #print("Test Mape: ", tmape)
 
-	print("Train:")
-	print("MAPE:", mape, "RMSE:", rmse_total, "MAE:", mae_total)
+	# print("Train:")
+	# print("MAPE:", mape, "RMSE:", rmse_total, "MAE:", mae_total)
 
-	print("Test:")
-	print("MAPE:", tmape, "RMSE:", trmse_total, "MAE:", tmae_total)
+	# print("Test:")
+	# print("MAPE:", tmape, "RMSE:", trmse_total, "MAE:", tmae_total)
 
 
 
@@ -1084,7 +1157,7 @@ def main():
 	#loss_nlayers("freeway_data/freeway_data2.csv",600)
 
 	#variation of pred horizon
-	#run_multi_aggregation("freeway_data/freeway_data2.csv",600,n_steps)
+	#run_multi_aggregation("freeway_data/freeway_data2.csv",600,6)
 
 	
 

@@ -1,16 +1,15 @@
-Dúvidas:
--> escolher o tamanho do train set no arima para as espiras pa mete o primeiro ano das espiras pq aí havia menos sensores a funcionar mal e cenas
--> correr o arima e escrever os resultados
--> correr a lstm
--> se tiver tempo depois de escrever, correr as redes para os dados iniciais,que são mais regulares
--> 4_6 + uma
--> os dados para o arima das espiras já tao prontos basta escolher o intervalo que vou utilizar
--> 
+TODO:
+
+-> 4_6 + uma (10_ct1)
+-> se der tempo testar numero de camadas
+-> escrever a Futwork
+DONE:	
+	-> acabar de escrever o arima
+DEPOIS DE TAR TUDO FEITO
 -> utilizar outro método que não a agregação dos dados para prever com + time steps
--> preciso de fazer um plot com todos para demonstrar a diferença de performance
--> tamanho do train set é muito menor no arima porque demora anos a compilar se for igual ao da nnr
--> Devia testar tudo nas mesmas condicoes (o tamanho do test set devia ser o mesmo)? Não? Perguntar ao professor como é que faço isto, porque nas redes eu mando depois um conjunto de valores de tamanho indefinido para ele predizer e no arima é diferente, dizemos o numero de steps que queremos predizer e ele faz
--> no arima não dá para ir fazendo "refit" e o arima não é tão bom a generalizar e also, as redes neuronais utilizam sempre 3 inputs passados de dados reais para fazer a predição enquanto que aqui ele consegue prever logo para o dia todo
+-> correr novamente o multi agg para as freeways
+-> testar o arima com diferentes tamanhos do conjunto de treino
+
 -> arima é menos scalable?
 Next steps:
 -> Escrever os resultados por ordem:

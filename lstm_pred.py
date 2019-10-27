@@ -53,19 +53,24 @@ def get_data(ID_Espira):
 
 	dataset_uid = dataset_uid.groupby('Data').apply(lambda x: x.reset_index())
 
-	# msk = np.random.rand(len(dataset_uid)) < 0.8
-	# train_df = dataset_uid[msk]
-	# test_df = dataset_uid[~msk]
-	dataset_2 = dataset_uid.values
-	train_size = int(len(dataset_2) * 0.80)
-	test_size = len(dataset_2) - train_size
-	train, test = dataset_2[0:train_size,:], dataset_2[train_size:len(dataset_2),:]
+	# Split the dataset randomly
+	msk = np.random.rand(len(dataset_uid)) < 0.8
+	train_df = dataset_uid[msk]
+	test_df = dataset_uid[~msk]
 	
-	train_df = pd.DataFrame(train)
-	test_df = pd.DataFrame(test)
 
-	train_df = train_df.drop(columns=[0])
-	test_df = test_df.drop(columns=[0])
+	## Split the dataset keeping in mind the sequence
+
+	#dataset_2 = dataset_uid.values
+	#train_size = int(len(dataset_2) * 0.80)
+	#test_size = len(dataset_2) - train_size
+	#train, test = dataset_2[0:train_size,:], dataset_2[train_size:len(dataset_2),:]
+	
+	#train_df = pd.DataFrame(train)
+	#test_df = pd.DataFrame(test)
+
+	#train_df = train_df.drop(columns=[0])
+	#test_df = test_df.drop(columns=[0])
 	dt2.to_csv("lstm/limited_data.csv", sep= ',', index=False)
 	#train_set
 	#train_df = train_df.drop(columns=["index"])
@@ -298,9 +303,9 @@ def lstm_model(trainX,trainY,n_features,n_steps,n_epochs):
 	trainX = trainX.reshape((trainX.shape[0], trainX.shape[1], n_features))
 	adam=optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
 	model = Sequential()
-	model.add(LSTM(64, activation='relu', input_shape=(n_steps, n_features), kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
-	#model.add(LSTM(32, activation='relu', kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
-	#return_sequences=True
+	model.add(LSTM(16, activation='relu', input_shape=(n_steps, n_features), return_sequences=False ,kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
+	#model.add(LSTM(64, activation='relu', kernel_regularizer= regularizers.l1_l2(l1=0.01, l2=0.01)))
+	
 	model.add(Dense(1))
 	model.compile(optimizer=adam, loss='mse',metrics=['mse','mae','mape'])
 	# fit model
@@ -712,8 +717,8 @@ def urban_mape_timelag(agg,epochs):
 		print("Saved!")
 
 def urban_multi_agg(train,test,n_steps=5):
-	train_mape_file = open("/content/drive/My Drive/4_ct6/agg_test2/lstm_urban_train_mape_agg.txt", "wb")
-	train_mape_file.close()
+	#train_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_mape_agg.txt", "wb")
+	#train_mape_file.close()
 
 	train_mape_agg = [[],[],[],[]]
 	test_mape_agg = [[],[],[],[]]
@@ -738,7 +743,7 @@ def urban_multi_agg(train,test,n_steps=5):
 	test_mae_total_agg = [[],[],[],[]]
 
 
-	for run in range(4):
+	for run in range(1):
 		print("Run nr:", run+1,"/3")
 		i=0
 		for interval in [15,30,45,60]:
@@ -782,72 +787,78 @@ def urban_multi_agg(train,test,n_steps=5):
 			train_mae_total_agg[i].append(mae_total)
 			test_mae_total_agg[i].append(tmae_total)
 
-			print("Train:")
-			print("MAPE:", mape, "RMSE:", rmse)
 
+
+			print("Train:")
+			print("MAPE:", mape, "RMSE:", rmse_total, "MAE:", mae_total)
+			print("OBS = 0","MAPE:", "-", "RMSE:", rmse_zeros, "MAE:", mae_zeros)
+			print("OBS != 0","MAPE:", mape, "RMSE:", rmse, "MAE:", mae)
+			
 			print("Test:")
-			print("MAPE:", tmape, "RMSE:", trmse)
+			print("MAPE:", tmape, "RMSE:", trmse_total, "MAE:", tmae_total)
+			print("OBS = 0","MAPE:", "-", "RMSE:", trmse_zeros, "MAE:", tmae_zeros)
+			print("OBS != 0","MAPE:", tmape, "RMSE:", trmse, "MAE:", tmae)
 			i+=1
 		print("Saving progress...")
 
-		train_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_mape_agg.txt", "wb")
-		test_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_mape_agg.txt", "wb")
+		# train_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_mape_agg.txt", "wb")
+		# test_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_mape_agg.txt", "wb")
 
-		train_rmse_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_rmse_agg.txt", "wb")
-		test_rmse_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_rmse_agg.txt", "wb")
+		# train_rmse_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_rmse_agg.txt", "wb")
+		# test_rmse_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_rmse_agg.txt", "wb")
 
-		train_mae_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_mae_agg.txt", "wb")
-		test_mae_file =	open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_mae_agg.txt", "wb")
+		# train_mae_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_mae_agg.txt", "wb")
+		# test_mae_file =	open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_mae_agg.txt", "wb")
 
-		train_rmse_zeros_file  = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_rmseWzeros_agg.txt", "wb")
-		test_rmse_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_rmseWzeros_agg.txt", "wb")
+		# train_rmse_zeros_file  = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_rmseWzeros_agg.txt", "wb")
+		# test_rmse_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_rmseWzeros_agg.txt", "wb")
 		
-		train_mae_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_maeWzeros_agg.txt", "wb")
-		test_mae_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_maeWzeros_agg.txt", "wb")
+		# train_mae_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_maeWzeros_agg.txt", "wb")
+		# test_mae_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_maeWzeros_agg.txt", "wb")
 		
-		train_rmse_total_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_rmsetotal_agg.txt", "wb")
-		test_rmse_total_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_rmsetotal_agg.txt", "wb")
+		# train_rmse_total_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_rmsetotal_agg.txt", "wb")
+		# test_rmse_total_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_rmsetotal_agg.txt", "wb")
 
-		train_mae_total_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_maetotal_agg.txt", "wb")
-		test_mae_total_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_maetotal_agg.txt", "wb")
+		# train_mae_total_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_train_maetotal_agg.txt", "wb")
+		# test_mae_total_file = open("/content/drive/My Drive/4_ct6/agg_test/lstm_urban_test_maetotal_agg.txt", "wb")
 		
-		pickle.dump(train_mape_agg,train_mape_file)
-		pickle.dump(test_mape_agg,test_mape_file)
+		# pickle.dump(train_mape_agg,train_mape_file)
+		# pickle.dump(test_mape_agg,test_mape_file)
 
-		pickle.dump(train_rmse_agg,train_rmse_file)
-		pickle.dump(test_rmse_agg,test_rmse_file)
+		# pickle.dump(train_rmse_agg,train_rmse_file)
+		# pickle.dump(test_rmse_agg,test_rmse_file)
 
-		pickle.dump(train_mae_agg,train_mae_file)
-		pickle.dump(test_mae_agg,test_mae_file)
+		# pickle.dump(train_mae_agg,train_mae_file)
+		# pickle.dump(test_mae_agg,test_mae_file)
 
-		pickle.dump(train_rmse_zeros_agg,train_rmse_zeros_file)
-		pickle.dump(test_rmse_zeros_agg,test_rmse_zeros_file)
+		# pickle.dump(train_rmse_zeros_agg,train_rmse_zeros_file)
+		# pickle.dump(test_rmse_zeros_agg,test_rmse_zeros_file)
 
-		pickle.dump(train_mae_zeros_agg,train_mae_zeros_file)
-		pickle.dump(test_mae_zeros_agg,test_mae_zeros_file)
+		# pickle.dump(train_mae_zeros_agg,train_mae_zeros_file)
+		# pickle.dump(test_mae_zeros_agg,test_mae_zeros_file)
 
-		pickle.dump(train_rmse_total_agg,train_rmse_total_file)
-		pickle.dump(test_rmse_total_agg,test_rmse_total_file)
+		# pickle.dump(train_rmse_total_agg,train_rmse_total_file)
+		# pickle.dump(test_rmse_total_agg,test_rmse_total_file)
 
-		pickle.dump(train_mae_total_agg,train_mae_total_file)
-		pickle.dump(test_mae_total_agg,test_mae_total_file)
+		# pickle.dump(train_mae_total_agg,train_mae_total_file)
+		# pickle.dump(test_mae_total_agg,test_mae_total_file)
 
 
 
-		train_mape_file.close()
-		test_mape_file.close()
-		train_rmse_file.close()
-		test_rmse_file.close()
-		train_mae_file.close()
-		test_mae_file.close()
-		train_rmse_zeros_file.close()
-		test_rmse_zeros_file.close()
-		train_mae_zeros_file.close()
-		test_mae_zeros_file.close()
-		train_rmse_total_file.close()
-		test_rmse_total_file.close()
-		train_mae_total_file.close()
-		test_mae_total_file.close()
+		# train_mape_file.close()
+		# test_mape_file.close()
+		# train_rmse_file.close()
+		# test_rmse_file.close()
+		# train_mae_file.close()
+		# test_mae_file.close()
+		# train_rmse_zeros_file.close()
+		# test_rmse_zeros_file.close()
+		# train_mae_zeros_file.close()
+		# test_mae_zeros_file.close()
+		# train_rmse_total_file.close()
+		# test_rmse_total_file.close()
+		# train_mae_total_file.close()
+		# test_mae_total_file.close()
 
 		print("Saved!")
 
@@ -920,7 +931,7 @@ def main():
 		# time lag variation
 		#urban_mape_timelag(15,40)
 		# aggregation test(train, test, n_prev steps + 1)
-		urban_multi_agg(smooth_train,smooth_test,4)
+		urban_multi_agg(smooth_train,smooth_test,5)
 
 		# n_layers  = len(model.layers)-1
 		# n_units = []

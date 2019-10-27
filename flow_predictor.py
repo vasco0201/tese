@@ -767,9 +767,9 @@ def run_multi_aggregation(filename,epochs,n_steps):
 		train_mae_total_file.close()
 		test_mae_total_file.close()
 
-def urban_multi_agg(train,test,n_steps=5):
+def urban_multi_agg(train,test,ID_Espira,n_steps=5):
 	
-	train_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_mape_agg.txt", "wb")
+	train_mape_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_train_mape_agg.txt", "wb")
 	train_mape_file.close()
 
 	train_mape_agg = [[],[],[],[]]
@@ -849,26 +849,26 @@ def urban_multi_agg(train,test,n_steps=5):
 			i+=1
 		print("Saving progress...")
 
-		train_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_mape_agg.txt", "wb")
-		test_mape_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_mape_agg.txt", "wb")
+		train_mape_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_train_mape_agg.txt", "wb")
+		test_mape_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_test_mape_agg.txt", "wb")
 
-		train_rmse_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_rmse_agg.txt", "wb")
-		test_rmse_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_rmse_agg.txt", "wb")
+		train_rmse_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_train_rmse_agg.txt", "wb")
+		test_rmse_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_test_rmse_agg.txt", "wb")
 
-		train_mae_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_mae_agg.txt", "wb")
-		test_mae_file =	open("/content/drive/My Drive/4_ct6/agg_test/urban_test_mae_agg.txt", "wb")
+		train_mae_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_train_mae_agg.txt", "wb")
+		test_mae_file =	open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_test_mae_agg.txt", "wb")
 
-		train_rmse_zeros_file  = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_rmseWzeros_agg.txt", "wb")
-		test_rmse_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_rmseWzeros_agg.txt", "wb")
+		train_rmse_zeros_file  = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_train_rmseWzeros_agg.txt", "wb")
+		test_rmse_zeros_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_test_rmseWzeros_agg.txt", "wb")
 		
-		train_mae_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_maeWzeros_agg.txt", "wb")
-		test_mae_zeros_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_maeWzeros_agg.txt", "wb")
+		train_mae_zeros_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_train_maeWzeros_agg.txt", "wb")
+		test_mae_zeros_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_test_maeWzeros_agg.txt", "wb")
 		
-		train_rmse_total_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_rmsetotal_agg.txt", "wb")
-		test_rmse_total_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_rmsetotal_agg.txt", "wb")
+		train_rmse_total_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_train_rmsetotal_agg.txt", "wb")
+		test_rmse_total_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_test_rmsetotal_agg.txt", "wb")
 
-		train_mae_total_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_train_maetotal_agg.txt", "wb")
-		test_mae_total_file = open("/content/drive/My Drive/4_ct6/agg_test/urban_test_maetotal_agg.txt", "wb")
+		train_mae_total_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_train_maetotal_agg.txt", "wb")
+		test_mae_total_file = open("/content/drive/My Drive/"+str(ID_Espira)+"/agg_test/urban_test_maetotal_agg.txt", "wb")
 		
 		pickle.dump(train_mape_agg,train_mape_file)
 		pickle.dump(test_mape_agg,test_mape_file)
@@ -997,7 +997,7 @@ def main():
 	epochs=600
 	#ID_Espira = input("Coloque id da espira: ")
 	#ID_Espira = "4_ct4"
-	ID_Espira = "4_ct6"
+	ID_Espira = "10_ct1"
 	test_date = np.datetime64('2018-08-27')
 	train_set, test_set = get_data(ID_Espira,0, test_date)
 	#dt2, train_set, test_set, dataset = get_data(ID_Espira)
@@ -1031,7 +1031,7 @@ def main():
 	#urban_mape_timelag(interval)
 
 	# #mape with varying prediction
-	urban_multi_agg(smooth_train,smooth_test,5)
+	urban_multi_agg(smooth_train,smooth_test,ID_Espira,5)
 
 	# transform_data2("train_"+str(interval)+".csv","train_formatted.csv",5)
 	# transform_data2("test_"+str(interval)+".csv","test_formatted.csv",5)

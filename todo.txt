@@ -1,6 +1,8 @@
 TODO:
 
 -> 4_6 + uma (10_ct1)
+-> Grammarly :
+	Falta o capitulo 4 e o 5
 -> se der tempo testar numero de camadas
 -> escrever a Futwork
 DONE:	

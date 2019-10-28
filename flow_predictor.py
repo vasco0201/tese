@@ -997,7 +997,8 @@ def main():
 	epochs=600
 	#ID_Espira = input("Coloque id da espira: ")
 	#ID_Espira = "4_ct4"
-	ID_Espira = "10_ct1"
+	ID_Espira = "4_ct2"
+	print("Espira ID:", ID_Espira)
 	test_date = np.datetime64('2018-08-27')
 	train_set, test_set = get_data(ID_Espira,0, test_date)
 	#dt2, train_set, test_set, dataset = get_data(ID_Espira)
